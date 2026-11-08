@@ -1,0 +1,16 @@
+node_modules
+.next
+dist
+build
+coverage
+*.lock
+package-lock.json
+prisma/migrations
+**/public
+**/*.svg
+
+# Le seed et les batchs prisma contiennent des longues chaînes éditoriales
+# qu'on préfère garder en mise en forme manuelle pour éviter que Prettier
+# transforme les retours à la ligne en chaînes monoline illisibles.
+admin/prisma/batch-*.ts
+admin/prisma/seed.ts

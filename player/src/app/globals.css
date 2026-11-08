@@ -1,0 +1,3702 @@
+@import "tailwindcss";
+
+/* Mon2027 — design tokens (ported from Claude Design prototype) */
+/* Fonts chargées via next/font/google dans layout.tsx (self-hosted, preload).
+   Les variables --font-display/body/serif/mono sont posées par next/font
+   sur <html className=...>. On les complète ici avec des fallbacks
+   raisonnables pour les écrans où la font custom n'a pas (encore) chargé. */
+
+:root {
+  /* Game-mode palette */
+  --cream:        #F5F1E8;
+  --cream-warm:   #FAF8F3;
+  --cream-deep:   #ECE4D2;
+  --paper:        #FAF8F3;
+  --paper-edge:   #E8DFC9;
+  --ink:          #1A1A1A;
+  --ink-soft:     #4A4842;
+  /* Texte secondaire. Était #8A877E (3,4:1 sur --paper, 2,8:1 sur
+     --cream-deep : illisible en plein soleil sur téléphone). #66635B tient
+     ≥ 4,5:1 (WCAG AA) sur --paper 5,65 · --cream 5,32 · --cream-deep 4,74. */
+  --ink-mute:     #66635B;
+  --rule:         #D9D0BA;
+  --rule-soft:    #E8DFC9;
+
+  --yellow:       #FFC845;
+  --yellow-deep:  #E5A815;
+  --coral:        #FF6B6B;
+  --coral-deep:   #E15555;
+  --teal:         #4ECDC4;
+  --teal-deep:    #2FA89F;
+  --plum:         #6B4E8F;
+
+  --signal-good:  #4A8F5C;
+  --signal-mid:   #D89A3E;
+  --signal-bad:   #C75D5D;
+  /* Variantes foncées pour le TEXTE des verdicts. Les teintes ci-dessus
+     restent pour les fonds, bordures et pastilles (elles plafonnent à 2,3–3,8:1
+     en texte). Contrastes calculés ≥ 4,5:1 sur --paper, --cream, --cream-deep
+     et sur les fonds teintés des chips (rgba signal 0.12–0.18) :
+       good-ink #356B46 : paper 5,92 · cream-deep 4,96 · chip vert 4,58 min
+       mid-ink  #82570F : paper 5,96 · cream-deep 5,00 · chip orange 5,08 min
+       bad-ink  #9E4141 : paper 6,02 · cream-deep 5,05 · chip rouge 4,93 min */
+  --signal-good-ink: #356B46;
+  --signal-mid-ink:  #82570F;
+  --signal-bad-ink:  #9E4141;
+
+  --shadow-card: 0 1px 0 rgba(26,26,26,0.04), 0 8px 24px -8px rgba(26,26,26,0.10);
+  --shadow-pop:  0 2px 0 rgba(26,26,26,0.08), 0 12px 32px -8px rgba(26,26,26,0.18);
+
+  /* ── Design system v1 — voir player/DESIGN.md ────────────────────────
+     Deux familles de surfaces interactives :
+       • pop  = bord ink + ombre offset noire (CTA hero, max 1-2/écran).
+       • soft = bord rule-soft, fond cream-warm (rows, cards secondaires).
+     Les utilitaires .pop-*, .soft-*, .pill, .icon-btn ci-dessous portent
+     hovers/actives uniformes ; les composants se contentent de poser la
+     classe et leurs styles métier (couleur, padding interne…). */
+
+  /* Élévations neo-brutalist (offset shadow) */
+  --pop-offset-sm: 3px;
+  --pop-offset-md: 4px;
+  --pop-offset-lg: 6px;
+  --pop-shadow-sm: 3px 3px 0 var(--ink);
+  --pop-shadow-md: 4px 4px 0 var(--ink);
+  --pop-shadow-lg: 6px 6px 0 var(--ink);
+
+  /* Rayons */
+  --radius-xs: 8px;     /* tag inline */
+  --radius-sm: 12px;    /* icon-button, input */
+  --radius-md: 16px;    /* row, card secondaire */
+  --radius-lg: 20px;    /* hero card, CTA principal */
+  --radius-xl: 28px;    /* hero desktop */
+  --radius-pill: 999px;
+
+  /* Transitions standards */
+  --ease-out: cubic-bezier(.2,.7,.2,1);
+  --t-fast: 0.12s var(--ease-out);
+  --t-base: 0.18s var(--ease-out);
+
+  /* Hover backgrounds neutres (icon buttons, menu items) */
+  --hover-bg:        rgba(0,0,0,0.04);
+  --hover-bg-strong: rgba(0,0,0,0.06);
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Utilities — "pop" family (CTA hero, theme cards, daily hero)
+   Bord ink 1.5px + ombre offset 4px ink. Hover : pousse 2px haut-gauche
+   et agrandit l'ombre. Active : repousse de 2px et écrase l'ombre.
+   Le composant fournit fond/padding/contenu ; cette classe gère border,
+   radius, shadow, transition, hover et active.
+   ───────────────────────────────────────────────────────────────────── */
+.pop-card {
+  border: 1.5px solid var(--ink);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--pop-shadow-md);
+  transition: transform var(--t-base), box-shadow var(--t-base);
+  cursor: pointer;
+  will-change: transform;
+}
+/* Survol réservé aux pointeurs qui survolent vraiment (souris, trackpad) :
+   sur écran tactile, :hover reste collé après un tap et la carte restait
+   soulevée. Le tactile garde le retour d'appui (:active, la carte s'enfonce). */
+@media (hover: hover) {
+  .pop-card:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: var(--pop-shadow-lg);
+  }
+  .pop-card--sm:hover { box-shadow: 4px 4px 0 var(--ink); }
+  .pop-card--lg:hover { box-shadow: 8px 8px 0 var(--ink); }
+  .pop-card:hover .theme-art,
+  .dt-themes-card:hover:not([disabled]) .theme-art {
+    transform: rotate(2deg) scale(1.07);
+  }
+}
+.pop-card:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--ink);
+  transition-duration: 0.08s;
+}
+.pop-card:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+/* Sticker de thème (cf. ThemeIllustration) : légèrement de travers au repos,
+   il se redresse et grossit quand on survole la carte qui le porte. */
+.theme-art {
+  flex-shrink: 0;
+  transform: rotate(-6deg);
+  transition: transform 0.25s cubic-bezier(.2,.7,.2,1);
+  pointer-events: none;
+  user-select: none;
+}
+/* Variante compacte (mobile / boutons internes) : offset 3px. */
+.pop-card--sm {
+  box-shadow: var(--pop-shadow-sm);
+  border-radius: var(--radius-md);
+}
+/* Variante hero desktop : offset 6px, rayon plus grand. */
+.pop-card--lg {
+  box-shadow: var(--pop-shadow-lg);
+  border-radius: var(--radius-xl);
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Utilities — "soft" family (ModeCard, row, search input)
+   Bord rule-soft 1.5px, pas d'ombre. Hover : border → ink + lift -1px.
+   ───────────────────────────────────────────────────────────────────── */
+.soft-card {
+  border: 1.5px solid var(--rule-soft);
+  border-radius: var(--radius-md);
+  transition: transform var(--t-base), border-color var(--t-base), background var(--t-base);
+  cursor: pointer;
+  background: var(--cream-warm);
+}
+.soft-card:hover {
+  border-color: var(--ink);
+  transform: translateY(-1px);
+}
+.soft-card:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+/* Inline (rows de liste, items dense) : pas de lift, juste accent border. */
+.soft-row {
+  border: 1.5px solid var(--rule-soft);
+  border-radius: var(--radius-md);
+  transition: border-color var(--t-base), background var(--t-base);
+  background: var(--cream-warm);
+}
+.soft-row:hover {
+  border-color: var(--ink);
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Utilities — pill (tabs, chips de filtre, badges interactifs)
+   Active/non-active partagent radius + transition ; les couleurs sont
+   pilotées par .pill--active (à appliquer en plus de .pill).
+   ───────────────────────────────────────────────────────────────────── */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--rule-soft);
+  background: var(--cream-warm);
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: background var(--t-base), color var(--t-base), border-color var(--t-base);
+  white-space: nowrap;
+}
+.pill:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+.pill--active {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--cream-warm);
+}
+.pill--active:hover {
+  /* L'état actif ne réagit pas au hover : il EST le contraste. */
+  border-color: var(--ink);
+  color: var(--cream-warm);
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Utilities — icon-btn (étoile favori, retour, user menu, close)
+   Carré 36×36 par défaut, radius sm, hover bg neutre, active scale.
+   ───────────────────────────────────────────────────────────────────── */
+.icon-btn {
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--ink-soft);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--t-base), color var(--t-base), transform var(--t-fast);
+}
+.icon-btn:hover {
+  background: var(--hover-bg);
+  color: var(--ink);
+}
+.icon-btn:active { transform: scale(0.92); }
+.icon-btn:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+.icon-btn--on {
+  /* État "rempli" — couleur géré inline (jaune favori, etc.). */
+  color: var(--ink);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; padding: 0; min-height: 100dvh; }
+/* Réserve la gouttière de scrollbar verticale en permanence : sans ça,
+   passer d'une page courte (sans scrollbar) à une page longue (avec
+   scrollbar) décale le contenu de ~15px horizontalement. L'AppNav
+   sticky en haut détecte ce shift et framer-motion anime alors le
+   motion.span (underline) qui pense que sa position a changé. */
+html { scrollbar-gutter: stable; }
+body {
+  font-family: var(--font-body);
+  color: var(--ink);
+  /* Same cream as the app-shell so the column never reads as a separate
+     visual frame, whatever the viewport width. */
+  background: var(--cream);
+  font-feature-settings: "ss01", "ss02";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+a { color: inherit; }
+
+.tnum { font-variant-numeric: tabular-nums; }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.serif { font-family: var(--font-serif); }
+.display { font-family: var(--font-display); letter-spacing: -0.02em; }
+
+/* ─────────────────────────────────────────────────────────────────────
+   Format body section padding
+   Le corps spécifique d'un format (slider, grille de cartes, drag-and-
+   drop, etc.) est rendu en `children` du QuestionShell. Sur mobile,
+   le shell ne pose pas de padding horizontal sur les enfants : chaque
+   format ajoute son propre 16px. Sur desktop, le grid `.dt-focus-center`
+   centre déjà le contenu : pas de padding horizontal.
+   Top padding spécifique au format (varie de 10 à 22px selon les besoins)
+   est passé en inline-style — cette classe ne gère QUE l'axe horizontal,
+   pour éliminer le `isDesktop ? "Xpx 16px 0" : "Xpx 0 0"` répété ~12x.
+   ───────────────────────────────────────────────────────────────────── */
+.q-body-pad   { padding-left: 16px; padding-right: 16px; }
+.q-reveal-pad { padding: 14px 16px 16px; }
+@media (min-width: 768px) {
+  .q-body-pad   { padding-left: 0;    padding-right: 0; }
+  .q-reveal-pad { padding: 18px 0 0; }
+}
+
+.paper-grain {
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(180,150,90,0.04) 0px, transparent 1px),
+    radial-gradient(circle at 70% 70%, rgba(180,150,90,0.05) 0px, transparent 1px),
+    radial-gradient(circle at 40% 80%, rgba(180,150,90,0.03) 0px, transparent 1px);
+  background-size: 3px 3px, 4px 4px, 5px 5px;
+}
+
+/* App shell — only renders below 768px (desktop has its own layout above that).
+   Fills the viewport edge-to-edge: no max-width centering, so the scrollbar
+   sits at the right of the content and there are no cream flanks at the
+   awkward 540-767px range. */
+.app-shell {
+  width: 100%;
+  min-height: 100dvh;
+  position: relative;
+  background: var(--cream);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Hide the dev scene navigator helper on very small viewports
+   (and keep it discreet on desktop). */
+@media (max-width: 480px) {
+  .scene-nav { font-size: 10px; max-width: 150px; }
+}
+
+/* Faux iOS status bar — only useful as preview affordance. Hidden on desktop. */
+.statusbar {
+  height: 44px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 26px 6px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  position: relative;
+  z-index: 2;
+}
+@media (min-width: 700px) {
+  .statusbar { display: none; }
+}
+.statusbar .icons { display: flex; gap: 6px; align-items: center; }
+.statusbar svg { display: block; }
+
+.page { flex: 1; min-height: 0; position: relative; overflow: hidden; }
+.scroll {
+  position: absolute; inset: 0;
+  overflow-y: auto; overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+/* Variante flex column : permet à un spacer `flex: 1` à l'intérieur de
+   pousser un élément final (ex. `.cta-bar` sticky) tout en bas du
+   viewport quand le contenu est court. Quand le contenu déborde, le
+   spacer se rétracte à 0 et la sticky reprend son comportement normal
+   pendant le scroll. */
+.scroll--col { display: flex; flex-direction: column; }
+
+.cta-bar {
+  padding: 16px 20px 22px;
+  background: linear-gradient(to bottom, transparent 0%, var(--cream) 30%);
+  position: sticky; bottom: 0;
+  /* Au-dessus des contrôles positionnés du contenu (pouce des curseurs
+     pondérés en z-index 1, pastilles du curseur multiple…) qui, sinon,
+     passaient par-dessus Valider / Terminer en défilant (y compris une
+     pastille survolée, z-index 20). Reste sous le popover Définition (30). */
+  z-index: 25;
+}
+
+.btn-primary {
+  width: 100%;
+  background: var(--ink);
+  color: var(--cream-warm);
+  border: 1.5px solid var(--ink);
+  border-radius: 16px;
+  padding: 18px 20px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: transform 0.12s ease, background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+.btn-primary:hover { background: #000; }
+.btn-primary:active { transform: scale(0.985); }
+/* Disabled : auparavant `opacity: 0.4` qui rendait le bouton "noir délavé"
+   — affordance ambigüe (le user voit un bouton presque-noir mais inactif).
+   Maintenant : outline-only avec texte ink-mute, qui dit clairement "ce
+   bouton attend quelque chose de toi" sans crier. La transition vers
+   l'état actif (clic sur une réponse) est visible et engageante. */
+.btn-primary[disabled] {
+  background: transparent;
+  color: var(--ink-mute);
+  border-color: var(--rule);
+  cursor: not-allowed;
+  opacity: 1;
+}
+.btn-primary[disabled]:hover { background: transparent; }
+
+.btn-secondary {
+  width: 100%;
+  background: transparent;
+  color: var(--ink);
+  border-radius: 16px;
+  padding: 16px 20px;
+  font-weight: 600;
+  font-size: 16px;
+  border: 1.5px solid var(--rule);
+}
+.btn-secondary:hover { background: rgba(0,0,0,0.04); }
+
+.estimate-slider {
+  -webkit-appearance: none; appearance: none;
+  width: 100%;
+  height: 56px;
+  background: transparent;
+  position: relative;
+  margin: 0;
+}
+.estimate-slider::-webkit-slider-runnable-track {
+  height: 14px;
+  background: var(--cream-deep);
+  border-radius: 99px;
+  border: 1.5px solid rgba(26,26,26,0.08);
+}
+.estimate-slider::-moz-range-track {
+  height: 14px;
+  background: var(--cream-deep);
+  border-radius: 99px;
+  border: 1.5px solid rgba(26,26,26,0.08);
+}
+.estimate-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--ink);
+  border: 4px solid var(--yellow);
+  cursor: grab;
+  /* Webkit pose le thumb avec son TOP aligné au top de la runnable-track ;
+     on remonte le thumb de (thumb - track)/2 = (40-14)/2 = 13 px pour qu'il
+     soit centré verticalement sur la track. La hauteur de l'input (56 px) est
+     volontairement > thumb pour que cette translation laisse le thumb
+     entièrement dans la bounding box du range input — sinon le drag rate (le
+     pointer event tape l'élément parent au lieu du slider). */
+  margin-top: -13px;
+  box-shadow: 0 4px 12px rgba(26,26,26,0.3);
+}
+.estimate-slider::-moz-range-thumb {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--ink);
+  border: 4px solid var(--yellow);
+  cursor: grab;
+  box-shadow: 0 4px 12px rgba(26,26,26,0.3);
+}
+.estimate-slider:active::-webkit-slider-thumb { cursor: grabbing; transform: scale(1.05); }
+
+/* Slider du format Pondéré : track invisible (la barre de fond est dessinée
+   par un div séparé pour pouvoir colorer le fill), thumb sobre.
+   Le composant est plus compact (height 24px) car répété 3-5 fois par question. */
+.pondere-slider::-webkit-slider-runnable-track {
+  height: 8px;
+  background: transparent;
+}
+.pondere-slider::-moz-range-track {
+  height: 8px;
+  background: transparent;
+}
+.pondere-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--ink);
+  border: 3px solid var(--cream-warm);
+  cursor: grab;
+  margin-top: -7px;
+  box-shadow: 0 2px 6px rgba(26,26,26,0.25);
+}
+.pondere-slider::-moz-range-thumb {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--ink);
+  border: 3px solid var(--cream-warm);
+  cursor: grab;
+  box-shadow: 0 2px 6px rgba(26,26,26,0.25);
+}
+.pondere-slider:active::-webkit-slider-thumb { cursor: grabbing; transform: scale(1.06); }
+.pondere-slider:focus { outline: none; }
+.pondere-slider:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 4px rgba(255, 200, 69, 0.45), 0 2px 6px rgba(26,26,26,0.25);
+}
+
+.scene-nav {
+  position: fixed;
+  top: 12px; right: 12px;
+  z-index: 1000;
+  background: rgba(20,17,14,0.92);
+  color: #FAF8F3;
+  border-radius: 14px;
+  padding: 10px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  backdrop-filter: blur(8px);
+  max-width: 180px;
+}
+@media (min-width: 700px) {
+  .scene-nav { top: 24px; right: 24px; }
+}
+.scene-nav .title {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em;
+  opacity: 0.6; margin-bottom: 6px; padding: 0 4px;
+}
+.scene-nav button {
+  display: block; width: 100%; text-align: left;
+  padding: 5px 8px; border-radius: 7px;
+  color: inherit; font-size: 11px;
+  transition: background 0.1s;
+}
+.scene-nav button:hover { background: rgba(255,255,255,0.08); }
+.scene-nav button.active { background: var(--yellow); color: var(--ink); font-weight: 600; }
+
+.paper {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-serif);
+}
+.paper-hairline { border-top: 1px solid var(--rule-soft); }
+
+.tile {
+  position: relative;
+  border-radius: 24px;
+  padding: 20px;
+  font-family: var(--font-display);
+  text-align: left;
+  display: flex; flex-direction: column;
+  transition: transform 0.18s cubic-bezier(.2,.7,.2,1), box-shadow 0.18s;
+  cursor: pointer;
+  border: 1.5px solid rgba(26,26,26,0.08);
+  box-shadow: 0 1px 0 rgba(26,26,26,0.05), 0 4px 0 rgba(26,26,26,0.06);
+}
+.tile:hover { transform: translateY(-2px); }
+.tile:active { transform: translateY(1px); box-shadow: 0 1px 0 rgba(26,26,26,0.05); }
+
+.axis-track {
+  position: relative;
+  height: 6px;
+  background: var(--rule-soft);
+  border-radius: 99px;
+}
+.axis-marker {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.source-card {
+  background: var(--cream-warm);
+  border: 1px solid var(--rule-soft);
+  border-radius: 12px;
+  padding: 14px 16px;
+  transition: background 0.15s, border-color 0.15s;
+  display: block;
+  text-decoration: none;
+}
+.source-card:hover { background: #fff; border-color: var(--rule); }
+
+.recap-cell {
+  border-radius: 16px;
+  padding: 16px;
+  position: relative;
+  font-family: var(--font-display);
+  border: 1.5px solid;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.recap-cell:hover { transform: translateY(-1px); }
+
+.scroll::-webkit-scrollbar { width: 4px; }
+.scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 4px; }
+
+@keyframes pop-in {
+  0% { transform: translateY(8px) scale(0.98); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+.pop-in { animation: pop-in 0.4s cubic-bezier(.2,.7,.2,1) both; }
+
+@keyframes marker-drop {
+  0%   { opacity: 0; transform: translate(-50%, -160%); }
+  60%  { opacity: 1; transform: translate(-50%, -45%); }
+  100% { opacity: 1; transform: translate(-50%, -50%); }
+}
+.marker-drop { animation: marker-drop 0.55s cubic-bezier(.2,.9,.2,1) both; }
+
+@keyframes line-grow { 0% { transform: scaleX(0); } 100% { transform: scaleX(1); } }
+@keyframes count-flicker { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+
+/* ------------------------------------------------------------------
+ * Home/onboarding entrance + idle motion.
+ * - `home-fade-up` : montée + fondu pour les blocs texte du hero.
+ * - `home-card-drop` : tombe avec rotation finale = var(--rot).
+ * - `home-card-float` : flottement infini, oscille autour de --rot.
+ * Les variantes c1/c2/c3 décalent les delays/périodes pour éviter le
+ * sync visuel et garder un rendu "collage vivant". --rot porte la
+ * rotation de repos de chaque card, à définir inline ou via classe.
+ * ------------------------------------------------------------------ */
+@keyframes home-fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes home-card-drop {
+  0%   { opacity: 0; transform: translateY(-34px) rotate(0deg) scale(0.94); }
+  60%  { opacity: 1; }
+  100% { opacity: 1; transform: translateY(0) rotate(var(--rot, 0deg)) scale(1); }
+}
+@keyframes home-card-float {
+  0%, 100% { transform: rotate(var(--rot, 0deg)) translateY(0); }
+  50%      { transform: rotate(calc(var(--rot, 0deg) * 0.55)) translateY(-7px); }
+}
+
+/* Onboarding mobile — mêmes mécaniques que le desktop, échelle réduite.
+   Les classes onb-* n'existent que dans le composant mobile. */
+.onb-anim {
+  animation: home-fade-up 0.6s cubic-bezier(.2,.7,.2,1) backwards;
+}
+.onb-anim--1 { animation-delay: 0.45s; }
+.onb-anim--2 { animation-delay: 0.55s; }
+.onb-anim--3 { animation-delay: 0.65s; }
+.onb-anim--4 { animation-delay: 0.75s; }
+.onb-hero-card {
+  transform: rotate(var(--rot, 0deg));
+  will-change: transform;
+}
+.onb-hero-card--c1 {
+  --rot: -3deg;
+  animation:
+    home-card-drop 0.7s cubic-bezier(.2,.7,.2,1) 0.10s backwards,
+    home-card-float 6.5s ease-in-out 0.80s infinite;
+}
+.onb-hero-card--c2 {
+  --rot: 2.5deg;
+  animation:
+    home-card-drop 0.7s cubic-bezier(.2,.7,.2,1) 0.22s backwards,
+    home-card-float 7.4s ease-in-out 0.92s infinite;
+}
+.onb-hero-card--c3 {
+  --rot: -1.5deg;
+  animation:
+    home-card-drop 0.7s cubic-bezier(.2,.7,.2,1) 0.34s backwards,
+    home-card-float 5.8s ease-in-out 1.04s infinite;
+}
+
+/* Respect des préférences d'accessibilité : on coupe les anims du hero
+   (entrée + flottement) sans tuer les transitions :hover des CTAs. */
+@media (prefers-reduced-motion: reduce) {
+  .dt-hero-left > *,
+  .dt-fact-wrap,
+  .dt-hero-strip,
+  .onb-hero-card,
+  .onb-anim {
+    animation: none !important;
+  }
+}
+
+/* Mouvement réduit, règle globale : toute l'app (pops de verdict, entrées du
+   dossier, barres qui se remplissent, pastilles qui glissent…) devient
+   instantanée. On garde une durée quasi nulle plutôt que `none` pour que les
+   `animationend` / `transitionend` éventuels se déclenchent quand même, et
+   `animation-fill-mode` des keyframes `both` laisse l'état final en place.
+   Côté framer-motion, c'est <MotionConfig reducedMotion="user"> (layout). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Cibles de focus programmatique (titre de scène / énoncé de question, carte
+   de dialogue) : elles reçoivent le focus pour guider les lecteurs d'écran,
+   pas pour être actionnées — pas d'anneau visuel parasite. */
+[tabindex="-1"]:focus {
+  outline: none;
+}
+
+/* ------------------------------------------------------------------
+ * Pop spring du verdict : utilisé pour le bandeau « Bonne/Mauvaise
+ * réponse » et pour l'icône XL ✓/✗ qui apparaît au-dessus de l'artefact
+ * choisi par le joueur au moment du verdict. La spring « overshoot »
+ * (cubic-bezier(.34,1.56,.64,1)) donne le sentiment gamifié.
+ * ------------------------------------------------------------------ */
+@keyframes verdict-banner-pop {
+  0%   { transform: scale(0.7) translateY(8px); opacity: 0; }
+  60%  { transform: scale(1.06) translateY(0); opacity: 1; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+.verdict-banner-pop {
+  animation: verdict-banner-pop 0.42s cubic-bezier(.34,1.56,.64,1) both;
+}
+
+/* translateY(-50%) baked dans chaque step pour compenser top:50% — sans ça,
+ * l'animation écrase la translation et l'icône saute en haut au début. */
+@keyframes verdict-icon-pop-good {
+  0%   { transform: translateY(-50%) scale(0.35) rotate(-14deg); opacity: 0; }
+  55%  { transform: translateY(-50%) scale(1.20) rotate(4deg);   opacity: 1; }
+  100% { transform: translateY(-50%) scale(1)    rotate(0deg);   opacity: 1; }
+}
+@keyframes verdict-icon-pop-bad {
+  0%   { transform: translateY(-50%) scale(0.35) rotate(12deg);  opacity: 0; }
+  55%  { transform: translateY(-50%) scale(1.20) rotate(-4deg);  opacity: 1; }
+  100% { transform: translateY(-50%) scale(1)    rotate(0deg);   opacity: 1; }
+}
+/* Stamp à droite, centré verticalement sur l'artefact joué : convient
+ * autant aux cartes AB (hautes) qu'aux rangées QCM (basses et larges).
+ * Le parent doit être en position: relative — voir .ab-card / .dt-ab-card /
+ * .tf-btn / .dt-tf-btn ainsi que les boutons des ChoiceRow QCM (inline). */
+.verdict-icon-xl {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 4;
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.18));
+  transform-origin: center center;
+}
+/* Variante "corner" du badge verdict (utilisée par les boutons Vrai/Faux
+   mobiles, et les cartes A/B desktop+mobile) : posé en coin haut-droit
+   plutôt que centré verticalement. Les keyframes par défaut
+   `verdict-icon-pop-{good,bad}` portent `translateY(-50%)` (calé sur la
+   position centrée originale) — si on les utilisait avec un positionnement
+   corner, l'icône se retrouverait remontée de 50% de sa hauteur et
+   déborderait au-dessus du coin de la carte. On définit donc des
+   keyframes corner sans translateY et on les ré-attache via le sélecteur
+   spécifique. */
+.tf-btn .verdict-icon-xl,
+.dt-ab-card .verdict-icon-xl,
+.ab-card .verdict-icon-xl {
+  top: 14px;
+  right: 14px;
+  transform: none;
+}
+.tf-btn .verdict-icon-xl.good,
+.dt-ab-card .verdict-icon-xl.good,
+.ab-card .verdict-icon-xl.good {
+  animation: verdict-icon-pop-corner-good 0.5s cubic-bezier(.34,1.56,.64,1) both;
+}
+.tf-btn .verdict-icon-xl.bad,
+.dt-ab-card .verdict-icon-xl.bad,
+.ab-card .verdict-icon-xl.bad {
+  animation: verdict-icon-pop-corner-bad 0.5s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes verdict-icon-pop-corner-good {
+  0%   { transform: scale(0.35) rotate(-14deg); opacity: 0; }
+  55%  { transform: scale(1.20) rotate(4deg);   opacity: 1; }
+  100% { transform: scale(1)    rotate(0deg);   opacity: 1; }
+}
+@keyframes verdict-icon-pop-corner-bad {
+  0%   { transform: scale(0.35) rotate(12deg);  opacity: 0; }
+  55%  { transform: scale(1.20) rotate(-4deg);  opacity: 1; }
+  100% { transform: scale(1)    rotate(0deg);   opacity: 1; }
+}
+.verdict-icon-xl.good {
+  animation: verdict-icon-pop-good 0.5s cubic-bezier(.34,1.56,.64,1) both;
+}
+.verdict-icon-xl.bad {
+  animation: verdict-icon-pop-bad 0.5s cubic-bezier(.34,1.56,.64,1) both;
+}
+
+/* Plus de secousse (`verdict-shake`) sur le mauvais choix : elle disait
+ * « faute ! » alors que le produit veut dire « on est nombreux à se faire
+ * piéger, voici pourquoi ». Le halo coloré + le texte du verdict suffisent.
+ * Léger pop scale sur l'artefact gagnant (scale 1 → 1.04 → 1). */
+@keyframes verdict-card-pop-good {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+
+.tf-btn {
+  flex: 1;
+  border-radius: 28px;
+  padding: 32px 20px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 32px;
+  text-align: center;
+  border: 2px solid var(--ink);
+  background: var(--cream-warm);
+  transition: transform 0.12s, background 0.15s;
+  cursor: pointer;
+  position: relative;
+}
+.tf-btn:hover { background: #fff; }
+.tf-btn:active { transform: scale(0.97); }
+.tf-btn.selected-true { background: var(--teal); color: var(--ink); }
+.tf-btn.selected-false { background: var(--coral); color: var(--ink); }
+
+.ab-card {
+  border-radius: 22px;
+  padding: 24px;
+  border: 1.5px solid var(--rule);
+  background: var(--cream-warm);
+  text-align: left;
+  font-family: var(--font-display);
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+}
+.ab-card:hover { background: #fff; border-color: var(--ink); }
+.ab-card.selected { background: var(--yellow); border-color: var(--ink); }
+.ab-card:disabled { cursor: default; }
+.ab-card:disabled:hover { background: var(--cream-warm); border-color: var(--rule); }
+.ab-card.verdict-pick-good {
+  background: var(--paper);
+  border-color: var(--signal-good);
+  box-shadow: 0 0 0 3px rgba(74, 143, 92, 0.18);
+  animation: verdict-card-pop-good 0.42s cubic-bezier(.34,1.56,.64,1);
+}
+.ab-card.verdict-pick-bad {
+  background: var(--paper);
+  border-color: var(--signal-bad);
+  box-shadow: 0 0 0 3px rgba(199, 93, 93, 0.16);
+}
+.ab-card.verdict-truth {
+  background: var(--paper);
+  border-color: var(--signal-good);
+  box-shadow: 0 0 0 1.5px rgba(74, 143, 92, 0.10);
+}
+.tf-btn:disabled { cursor: default; }
+/* En révélation, la couleur dit juste/faux, plus Vrai/Faux : le fond teal /
+   coral de la sélection disparaît (fond neutre --paper) et seuls le halo et
+   le tampon ✓/✗ portent le verdict. Sans ça, un « Faux » correct restait
+   rouge plein avec une coche verte — message contradictoire. Même
+   spécificité que `.tf-btn.selected-*`, mais déclaré après : c'est lui qui
+   gagne. */
+.tf-btn.verdict-pick-good,
+.tf-btn.verdict-pick-bad,
+.tf-btn.verdict-truth {
+  background: var(--paper);
+  color: var(--ink);
+}
+.tf-btn.verdict-pick-good {
+  border-color: var(--signal-good);
+  box-shadow: 0 0 0 3px rgba(74, 143, 92, 0.18);
+  animation: verdict-card-pop-good 0.42s cubic-bezier(.34,1.56,.64,1);
+}
+.tf-btn.verdict-pick-bad {
+  border-color: var(--signal-bad);
+  box-shadow: 0 0 0 3px rgba(199, 93, 93, 0.16);
+}
+.tf-btn.verdict-truth {
+  border-color: var(--signal-good);
+  box-shadow: 0 0 0 1.5px rgba(74, 143, 92, 0.10);
+}
+
+.folder-tab {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--ink);
+  color: var(--cream-warm);
+  padding: 4px 12px;
+  border-radius: 6px 6px 0 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.tick { color: var(--signal-good-ink); }
+.no-select { user-select: none; -webkit-user-select: none; }
+
+/* ===================================================================
+   DESKTOP TOKENS (≥ 768px) — ported from tokens-desktop.css
+   Wide-desktop layouts kick in at 1024px via nested media queries.
+   =================================================================== */
+@media (min-width: 768px) {
+  html, body { height: 100%; }
+  body {
+    background: var(--cream);
+    color: var(--ink);
+    font-family: var(--font-body);
+    overflow-y: auto;
+    display: block;
+    padding: 0;
+    min-height: auto;
+    align-items: initial;
+    justify-content: initial;
+  }
+
+  .dt-nav {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--cream);
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .dt-nav.is-paper { background: var(--paper); }
+  .dt-nav.scrolled { border-bottom-color: var(--rule-soft); }
+  .dt-nav-inner {
+    max-width: 1320px;
+    margin: 0 auto;
+    height: 64px;
+    padding: 0 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px;
+  }
+  .dt-nav-left { display: flex; align-items: center; gap: 28px; min-width: 0; }
+  .dt-nav-links { display: flex; gap: 20px; }
+  .dt-nav-links a {
+    font-size: 13px; color: var(--ink-soft);
+    text-decoration: none;
+    padding: 4px 0;
+    border-bottom: 1px solid transparent;
+    white-space: nowrap;
+  }
+  .dt-nav-links a:hover { color: var(--ink); border-bottom-color: var(--ink); }
+  .dt-nav-links a[aria-current="page"] {
+    color: var(--ink);
+    border-bottom-color: var(--coral);
+  }
+  .dt-nav-right { display: flex; align-items: center; gap: 14px; font-size: 13px; color: var(--ink-soft); white-space: nowrap; }
+
+  .dt-page { min-height: calc(100vh - 64px); }
+  .dt-content {
+    max-width: 1360px;
+    margin: 0 auto;
+    /* Padding ≥ valeurs de la tranche tablet (qui override en-dessous à
+       24 / 48). Avant on avait `clamp(12, 2vh, 32)` top et `clamp(16, 2.5vh,
+       48)` bottom : sur les laptops courts (~720dvh), la part vh tombait
+       sous le min et on se retrouvait avec 12/16px en desktop alors que
+       tablet imposait 24/48px — moins de respiration sur grand écran que
+       sur petit, illogique. Mins remontés à 24 (top) et 48 (bottom) pour
+       garantir la cohérence. */
+    padding: clamp(24px, 2vh, 32px) 24px clamp(48px, 3.5vh, 56px);
+  }
+
+  .dt-hero {
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap: 48px;
+    align-items: center;
+    padding: 16px 0 24px;
+  }
+  .dt-hero h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    /* Lower the max so the title fits comfortably above the fold on common
+       desktop heights (≥ 800-900px) without dominating the viewport. */
+    font-size: clamp(48px, 5vw, 76px);
+    line-height: 0.98;
+    letter-spacing: -0.035em;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .dt-hero-sub {
+    font-size: 18px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    max-width: 460px;
+    margin-top: 20px;
+  }
+  .dt-hero-cta {
+    margin-top: 28px;
+    display: inline-flex; align-items: center; gap: 12px;
+    background: var(--ink);
+    color: var(--cream-warm);
+    padding: 18px 28px;
+    border-radius: 18px;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 18px;
+    letter-spacing: -0.01em;
+    transition: transform 0.15s ease, background 0.15s;
+    cursor: pointer;
+    border: 0;
+  }
+  .dt-hero-cta:hover { background: #000; transform: translateY(-1px); }
+
+  .dt-hero-cards { position: relative; height: 460px; }
+  /* Structure deux couches :
+     - `.dt-fact-wrap` porte la position absolue, la rotation et les
+       animations (drop + float perpétuel). On ne touche jamais à son
+       transform en hover : on pause l'animation seulement.
+     - `.dt-fact-card` (enfant) porte les visuels et la transition de
+       hover (lift + shadow). Séparer évite le conflit classique
+       animation-vs-transition qui rendait le hover saccadé. */
+  .dt-fact-wrap {
+    position: absolute;
+    transform: rotate(var(--rot, 0deg));
+    will-change: transform;
+  }
+  /* Drop puis float perpétuel. Chained delays : float démarre pile à la
+     fin du drop pour qu'il n'y ait pas de freeze visuel entre les deux. */
+  .dt-fact-wrap--c1 {
+    --rot: -4deg;
+    animation:
+      home-card-drop 0.75s cubic-bezier(.2,.7,.2,1) 0.15s backwards,
+      home-card-float 6.5s ease-in-out 0.90s infinite;
+  }
+  .dt-fact-wrap--c2 {
+    --rot: 3deg;
+    animation:
+      home-card-drop 0.75s cubic-bezier(.2,.7,.2,1) 0.30s backwards,
+      home-card-float 7.5s ease-in-out 1.05s infinite;
+  }
+  .dt-fact-wrap--c3 {
+    --rot: -2deg;
+    animation:
+      home-card-drop 0.75s cubic-bezier(.2,.7,.2,1) 0.45s backwards,
+      home-card-float 5.8s ease-in-out 1.20s infinite;
+  }
+  /* On fige le flottement quand le pointeur entre — sinon la card
+     "respire" sous la souris, distrayant. */
+  .dt-fact-wrap:hover { animation-play-state: paused; }
+
+  .dt-fact-card {
+    padding: 22px 26px;
+    border-radius: 22px;
+    border: 1.5px solid var(--ink);
+    font-family: var(--font-display);
+    box-shadow: 6px 6px 0 var(--ink);
+    transition: transform 0.28s cubic-bezier(.2,.7,.2,1), box-shadow 0.28s cubic-bezier(.2,.7,.2,1);
+    cursor: pointer;
+  }
+  .dt-fact-wrap:hover .dt-fact-card {
+    transform: translate(-4px, -4px);
+    box-shadow: 10px 10px 0 var(--ink);
+  }
+
+  /* Hero gauche : montée échelonnée des blocs (eyebrow, titre, sub, CTA,
+     login, méthode). On cible les enfants directs pour éviter d'ajouter
+     une classe à chacun côté JSX. Important : tout enfant ajouté DOIT
+     avoir son propre nth-child(N) ici, sinon il hérite d'animation-delay:
+     0s et apparaît AVANT les autres — séquence cassée (le footer méthode
+     surgissait avant le titre). */
+  .dt-hero-left > * {
+    animation: home-fade-up 0.65s cubic-bezier(.2,.7,.2,1) backwards;
+  }
+  .dt-hero-left > *:nth-child(1) { animation-delay: 0.05s; }
+  .dt-hero-left > *:nth-child(2) { animation-delay: 0.15s; }
+  .dt-hero-left > *:nth-child(3) { animation-delay: 0.25s; }
+  .dt-hero-left > *:nth-child(4) { animation-delay: 0.35s; }
+  .dt-hero-left > *:nth-child(5) { animation-delay: 0.45s; }
+  .dt-hero-left > *:nth-child(6) { animation-delay: 0.55s; }
+  .dt-hero-left > *:nth-child(7) { animation-delay: 0.65s; }
+
+  /* Bandeau de garanties (sources / non-partisan / sans email / open
+     data) : apparition unifiée après le hero. */
+  .dt-hero-strip { animation: home-fade-up 0.7s cubic-bezier(.2,.7,.2,1) 0.6s backwards; }
+  .dt-fact-card .tag {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+  .dt-fact-card .figure {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 44px;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    margin: 0 0 8px;
+  }
+  .dt-fact-card .text {
+    font-size: 16px;
+    line-height: 1.35;
+    font-weight: 500;
+    max-width: 280px;
+  }
+
+  .dt-greeting {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    margin-bottom: 32px;
+  }
+  .dt-greeting h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 52px;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .dt-greeting-meta {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-mute);
+    letter-spacing: 0.04em;
+    text-align: right;
+  }
+
+  .dt-menu-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr;
+    gap: 16px;
+  }
+  .dt-tile {
+    position: relative;
+    border-radius: 24px;
+    padding: 28px 32px 32px;
+    border: 1.5px solid rgba(26,26,26,0.10);
+    display: flex; flex-direction: column;
+    font-family: var(--font-display);
+    text-align: left;
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(.2,.7,.2,1), box-shadow 0.2s;
+    min-height: 280px;
+  }
+  .dt-tile:hover { transform: translateY(-3px); box-shadow: 0 2px 0 var(--ink), 0 16px 32px -12px rgba(0,0,0,0.18); }
+  .dt-tile-tag {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    opacity: 0.75;
+  }
+  .dt-tile h3 {
+    font-weight: 700;
+    font-size: 32px;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin: 14px 0 0;
+    text-wrap: balance;
+  }
+  .dt-tile-meta {
+    font-size: 13px;
+    margin-top: auto;
+    padding-top: 16px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .dt-tile-arrow {
+    width: 48px; height: 48px;
+    border-radius: 16px;
+    background: var(--ink);
+    color: var(--yellow);
+    display: grid; place-items: center;
+  }
+
+  .dt-themes { margin-top: 56px; }
+  .dt-section-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+  .dt-section-head h2 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 22px;
+    letter-spacing: -0.02em;
+    margin: 0;
+  }
+  .dt-section-head .sub { font-size: 13px; color: var(--ink-mute); }
+  .dt-theme-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+  }
+  .dt-theme-chip {
+    border-radius: 14px;
+    padding: 18px 18px 16px;
+    border: 1.5px solid rgba(26,26,26,0.12);
+    font-family: var(--font-display);
+    text-align: left;
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .dt-theme-chip:hover { transform: translateY(-2px); }
+  .dt-theme-chip .lbl { font-weight: 700; font-size: 16px; }
+  .dt-theme-chip .n  { display: block; font-family: var(--font-mono); font-size: 11px; color: var(--ink-soft); margin-top: 4px; letter-spacing: 0.04em; }
+
+  .dt-defi-banner {
+    margin-top: 56px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 32px;
+    align-items: center;
+    padding: 32px 36px;
+    background: var(--ink);
+    color: var(--cream-warm);
+    border-radius: 22px;
+  }
+
+  /* Question (focus) : une seule colonne centrée, sans rails latéraux
+     (retirés le 2026-11-07). Thème, difficulté et position tiennent dans
+     la `.dt-question-bar` au-dessus. 960 px : assez large pour les échelles,
+     classements et catégorisations, sans lignes de titre trop longues. */
+  .dt-focus {
+    display: grid;
+    grid-template-columns: minmax(0, 960px);
+    justify-content: center;
+    padding-top: clamp(4px, 1vh, 16px);
+  }
+  /* Variante : grille `dt-focus` réutilisée pour aligner l'action bar du
+     reveal sur la colonne de la question, sans le padding-top du dt-focus
+     principal (la barre vit juste après le contenu). */
+  .dt-focus-actions {
+    padding-top: 0;
+  }
+  /* Barre d'action du reveal, rendue APRÈS le dossier : collante en bas de
+     la fenêtre tant que le dossier défile (elle reste trouvable), posée sous
+     le dossier en fin de page. Fond papier = celui de la page en phase
+     dossier, pour que le texte qui défile dessous ne transparaisse pas. */
+  .dt-reveal-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    background: var(--paper);
+    padding-bottom: 14px;
+    animation: dossier-enter-desktop 0.55s cubic-bezier(.2,.7,.2,1) both;
+  }
+  .dt-reveal-actions .reveal-action-bar {
+    margin-top: 0;
+    padding-top: 14px;
+  }
+  .dt-focus-center { background: transparent; }
+  /* Énoncé + sticker du thème dans l'espace libre à droite du titre. */
+  .dt-question-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 32px;
+  }
+  .dt-question-head .dt-question { flex: 1 1 auto; min-width: 0; }
+  .dt-question-art { margin: -6px 4px -24px 0; }
+  .dt-question-bar {
+    max-width: 960px;
+    margin: 0 auto clamp(16px, 2.4vh, 28px);
+  }
+  .dt-question-bar-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .dt-question-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+  .dt-question-bar-diff {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    letter-spacing: 0.04em;
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+  }
+  .dt-question-bar-position {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    letter-spacing: 0.06em;
+    color: var(--ink-mute);
+  }
+  .dt-question-bar-position strong { color: var(--ink); font-weight: 600; }
+  .dt-question-bar-progress {
+    margin-top: 10px;
+    height: 4px;
+    border-radius: 99px;
+    background: var(--cream-deep);
+    overflow: hidden;
+  }
+  .dt-question-bar-progress > div {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.4s ease-out;
+  }
+
+  .dt-question {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(28px, min(3.4vw, 5.2vh), 52px);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    text-wrap: balance;
+  }
+
+  .dt-estimate-display {
+    text-align: center;
+    margin: clamp(12px, 2.4vh, 32px) 0 clamp(6px, 1.2vh, 16px);
+  }
+  .dt-estimate-display .big {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(60px, min(7vw, 10vh), 112px);
+    line-height: 1;
+    letter-spacing: -0.05em;
+    font-variant-numeric: tabular-nums;
+  }
+  .dt-estimate-display .unit {
+    font-size: clamp(24px, min(3vw, 4.2vh), 44px);
+    font-weight: 600;
+    margin-left: 0.25em;
+    color: var(--ink-soft);
+  }
+
+  .dt-slider-wrap { padding: 0 16px; }
+  .dt-slider {
+    -webkit-appearance: none; appearance: none;
+    width: 100%;
+    /* Hauteur du wrap : doit être >= thumb (56) pour que le thumb, une fois
+       centré sur la track via margin-top négatif, reste dans la bbox du range
+       input. Avec un floor < 56, le thumb dépasse et le drag rate. */
+    height: clamp(80px, 8vh, 96px);
+    background: transparent;
+  }
+  .dt-slider::-webkit-slider-runnable-track {
+    height: 18px;
+    background: var(--cream-deep);
+    border-radius: 99px;
+    border: 1.5px solid rgba(26,26,26,0.10);
+  }
+  .dt-slider::-moz-range-track {
+    height: 18px;
+    background: var(--cream-deep);
+    border-radius: 99px;
+    border: 1.5px solid rgba(26,26,26,0.10);
+  }
+  .dt-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: var(--ink);
+    border: 5px solid var(--yellow);
+    cursor: grab;
+    /* (thumb - track)/2 = (56-18)/2 = 19 — centre le thumb sur la track sans
+       le faire dépasser de l'input (cf. height: clamp(80px, 8vh, 96px)). */
+    margin-top: -19px;
+    box-shadow: 0 6px 18px rgba(26,26,26,0.3);
+  }
+  .dt-slider::-moz-range-thumb {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: var(--ink);
+    border: 5px solid var(--yellow);
+    cursor: grab;
+  }
+
+  .dt-submit-wrap {
+    margin-top: clamp(16px, 2.4vh, 36px);
+    display: flex;
+    justify-content: center;
+  }
+
+  .dt-btn-primary {
+    background: var(--ink);
+    color: var(--cream-warm);
+    border: 1.5px solid var(--ink);
+    border-radius: 16px;
+    padding: 18px 32px;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 17px;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    display: inline-flex; align-items: center; gap: 10px;
+    transition: transform 0.12s, background 0.12s, color 0.12s, border-color 0.12s;
+  }
+  .dt-btn-primary:hover:not([disabled]) { background: #000; }
+  .dt-btn-primary:active { transform: scale(0.985); }
+  /* Disabled : passe en outline-only avec texte ink-mute. Avant
+     `opacity: 0.35` rendait un bouton "noir délavé" qui ressemblait à un
+     CTA actif éteint — confusion visuelle. La transition vers l'état actif
+     (clic sur une réponse) est désormais nette : outline → fill noir. */
+  .dt-btn-primary[disabled] {
+    background: transparent;
+    color: var(--ink-mute);
+    border-color: var(--rule);
+    cursor: not-allowed;
+    opacity: 1;
+  }
+
+  .dt-btn-secondary {
+    border: 1.5px solid var(--rule);
+    background: transparent;
+    color: var(--ink);
+    border-radius: 16px;
+    padding: 16px 28px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .dt-btn-secondary:hover { background: rgba(0,0,0,0.04); }
+
+  .dt-tf-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(20px, 2vw, 36px);
+    margin-top: clamp(28px, 5vh, 72px);
+  }
+  .dt-tf-btn {
+    padding: clamp(48px, 10vh, 112px) 32px;
+    border-radius: 28px;
+    border: 2px solid var(--ink);
+    background: var(--cream-warm);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(40px, min(5vw, 8vh), 80px);
+    cursor: pointer;
+    transition: transform 0.15s, background 0.15s;
+    text-align: center;
+    position: relative;
+  }
+  .dt-tf-btn:hover { background: #fff; transform: translateY(-2px); }
+  .dt-tf-btn.selected-true { background: var(--teal); }
+  .dt-tf-btn.selected-false { background: var(--coral); }
+  .dt-tf-btn:disabled { cursor: default; transform: none; }
+  .dt-tf-btn:disabled:hover { background: var(--cream-warm); transform: none; }
+  .dt-tf-btn.selected-true:disabled:hover { background: var(--teal); }
+  .dt-tf-btn.selected-false:disabled:hover { background: var(--coral); }
+  /* Verdict in-place pour les boutons Vrai/Faux. Fond neutre en révélation
+     (cf. .tf-btn mobile) : la couleur dit juste/faux, pas Vrai/Faux. Les
+     variantes :disabled:hover doublent la règle pour battre
+     `.dt-tf-btn.selected-*:disabled:hover` ci-dessus. */
+  .dt-tf-btn.verdict-pick-good,
+  .dt-tf-btn.verdict-pick-bad,
+  .dt-tf-btn.verdict-truth,
+  .dt-tf-btn.verdict-pick-good:disabled:hover,
+  .dt-tf-btn.verdict-pick-bad:disabled:hover,
+  .dt-tf-btn.verdict-truth:disabled:hover {
+    background: var(--paper);
+  }
+  .dt-tf-btn.verdict-pick-good {
+    border-color: var(--signal-good);
+    box-shadow: 0 0 0 4px rgba(74, 143, 92, 0.18);
+    animation:
+      ab-card-verdict-pulse 0.55s cubic-bezier(.2,.7,.2,1),
+      verdict-card-pop-good 0.42s cubic-bezier(.34,1.56,.64,1);
+  }
+  .dt-tf-btn.verdict-pick-bad {
+    border-color: var(--signal-bad);
+    box-shadow: 0 0 0 4px rgba(199, 93, 93, 0.16);
+    animation: ab-card-verdict-pulse-bad 0.55s cubic-bezier(.2,.7,.2,1);
+  }
+  .dt-tf-btn.verdict-truth {
+    border-color: var(--signal-good);
+    box-shadow: 0 0 0 2px rgba(74, 143, 92, 0.10);
+  }
+
+  .dt-ab-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(18px, 1.8vw, 32px);
+    margin-top: clamp(24px, 4vh, 64px);
+  }
+  .dt-ab-card {
+    border-radius: 24px;
+    padding: clamp(24px, 4vh, 44px) clamp(24px, 2.4vw, 40px);
+    border: 1.5px solid var(--rule);
+    background: var(--cream-warm);
+    cursor: pointer;
+    font-family: var(--font-display);
+    text-align: left;
+    transition: all 0.18s;
+    display: flex; flex-direction: column; gap: 16px;
+    min-height: clamp(200px, 28vh, 320px);
+    position: relative;
+  }
+  .dt-ab-card:hover { background: #fff; border-color: var(--ink); }
+  .dt-ab-card.selected { background: var(--yellow); border-color: var(--ink); box-shadow: 0 2px 0 var(--ink); }
+  .dt-ab-card:disabled { cursor: default; }
+  .dt-ab-card:disabled:hover { background: var(--cream-warm); border-color: var(--rule); }
+
+  /* Verdict in-place : la carte que le joueur a choisie reçoit un halo coloré
+     (vert si bonne réponse, coral sinon). La bonne réponse, si différente du
+     choix, reçoit un anneau plus discret pour la signaler aussi. */
+  .dt-ab-card.verdict-pick-good {
+    background: var(--paper);
+    border-color: var(--signal-good);
+    box-shadow: 0 0 0 4px rgba(74, 143, 92, 0.18), 0 2px 0 var(--signal-good);
+    animation:
+      ab-card-verdict-pulse 0.55s cubic-bezier(.2,.7,.2,1),
+      verdict-card-pop-good 0.42s cubic-bezier(.34,1.56,.64,1);
+  }
+  .dt-ab-card.verdict-pick-bad {
+    background: var(--paper);
+    border-color: var(--signal-bad);
+    box-shadow: 0 0 0 4px rgba(199, 93, 93, 0.16), 0 2px 0 var(--signal-bad);
+  }
+  .dt-ab-card.verdict-truth {
+    background: var(--paper);
+    border-color: var(--signal-good);
+    box-shadow: 0 0 0 2px rgba(74, 143, 92, 0.10);
+  }
+  @keyframes ab-card-verdict-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(74, 143, 92, 0); }
+    50%  { box-shadow: 0 0 0 10px rgba(74, 143, 92, 0.18), 0 2px 0 var(--signal-good); }
+    100% { box-shadow: 0 0 0 4px rgba(74, 143, 92, 0.18), 0 2px 0 var(--signal-good); }
+  }
+  .dt-ab-card.verdict-pick-bad {
+    animation: ab-card-verdict-pulse-bad 0.55s cubic-bezier(.2,.7,.2,1);
+  }
+  @keyframes ab-card-verdict-pulse-bad {
+    0%   { box-shadow: 0 0 0 0 rgba(199, 93, 93, 0); }
+    50%  { box-shadow: 0 0 0 10px rgba(199, 93, 93, 0.18), 0 2px 0 var(--signal-bad); }
+    100% { box-shadow: 0 0 0 4px rgba(199, 93, 93, 0.16), 0 2px 0 var(--signal-bad); }
+  }
+  .dt-ab-card .lbl {
+    font-weight: 700;
+    font-size: clamp(22px, min(2.2vw, 3.4vh), 34px);
+    line-height: 1.15;
+  }
+
+  /* Dossier panel : déplié en dessous de la zone du verdict après soumission. */
+  /* Le dossier n'est monté qu'à la phase « dossier » du reveal (cf. les
+   *  runners). L'entrée est portée par une animation CSS qui joue au mount,
+   *  ce qui évite de réserver de l'espace vide dans la page tant que le joueur
+   *  n'a pas répondu. */
+  .dossier-panel {
+    font-family: var(--font-serif);
+    max-width: 880px;
+    margin: 40px auto 0;
+    padding: 28px 0 48px;
+    border-top: 1px solid var(--rule-soft);
+    animation: dossier-enter-desktop 0.55s cubic-bezier(.2,.7,.2,1) both;
+  }
+  @keyframes dossier-enter-desktop {
+    0%   { opacity: 0; transform: translateY(16px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  .dt-recap-grid {
+    display: grid;
+    /* `minmax(0, 1fr)` (au lieu du `1fr` par défaut) : sans ça, les
+       grid items ont un min-content implicite égal à leur contenu, donc
+       un chiffre-clé long ("868 000 enseignants" en 44px) gonfle la
+       cellule au-delà de sa fraction et fait déborder toute la grille
+       horizontalement. */
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 16px;
+    margin: 40px 0 24px;
+  }
+  .dt-recap-cell {
+    padding: 24px;
+    border-radius: 20px;
+    border: 1.5px solid;
+    min-height: 280px;
+    display: flex; flex-direction: column;
+    font-family: var(--font-display);
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  .dt-recap-cell:hover { transform: translateY(-3px); }
+  .dt-recap-cell .num {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+  }
+  .dt-recap-cell .fig {
+    font-family: var(--font-display);
+    font-weight: 700;
+    /* `clamp` au lieu d'un 44px fixe : laisse le chiffre rétrécir pour
+       les longues valeurs ("868 000 enseignants") au lieu de déborder. */
+    font-size: clamp(28px, 3vw, 44px);
+    line-height: 1;
+    letter-spacing: -0.03em;
+    margin-top: 12px;
+    font-variant-numeric: tabular-nums;
+    /* `overflow-wrap: anywhere` : casse les chaînes longues sans espace
+       (rare avec nos chiffres formatés, mais préserve la cellule en cas
+       de label sans espace). */
+    overflow-wrap: anywhere;
+    min-width: 0;
+  }
+  .dt-recap-cell .lbl {
+    margin-top: auto;
+    padding-top: 16px;
+    font-size: 13px;
+    line-height: 1.3;
+    color: var(--ink-soft);
+  }
+
+  .dt-challenge {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 56px;
+    align-items: start;
+    padding-top: 32px;
+  }
+  .dt-share-card {
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 8px 10px 0 var(--ink);
+    font-family: var(--font-serif);
+  }
+
+  .dt-scene-nav {
+    position: fixed;
+    bottom: 20px; right: 20px;
+    z-index: 1000;
+    background: rgba(20,17,14,0.94);
+    color: #FAF8F3;
+    border-radius: 12px;
+    padding: 10px;
+    font-family: var(--font-body);
+    font-size: 12px;
+    backdrop-filter: blur(12px);
+    max-width: 200px;
+    box-shadow: 0 8px 24px -8px rgba(0,0,0,0.4);
+  }
+  .dt-scene-nav .ttl {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em;
+    opacity: 0.55; margin-bottom: 8px; padding: 0 4px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .dt-scene-nav button {
+    display: block; width: 100%; text-align: left;
+    padding: 6px 10px; border-radius: 8px;
+    color: inherit; font-size: 12px;
+    background: transparent; border: 0; cursor: pointer;
+    transition: background 0.1s;
+    font-family: inherit;
+  }
+  .dt-scene-nav button:hover { background: rgba(255,255,255,0.08); }
+  .dt-scene-nav button.active { background: var(--yellow); color: var(--ink); font-weight: 600; }
+
+  .dt-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 5px 11px;
+    border-radius: 99px;
+    background: var(--cream-deep);
+    color: var(--ink-soft);
+  }
+  .dt-chip .dot { width: 6px; height: 6px; border-radius: 99px; background: currentColor; }
+
+  .dt-folder-tab {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--ink);
+    color: var(--yellow);
+    padding: 6px 14px;
+    border-radius: 8px 8px 0 0;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* dt-axis2 — robust 3-row grid : top-labels / track / bottom-labels.
+     Each row sizes to its content so labels can't overflow into siblings. */
+  .dt-axis2 {
+    display: grid;
+    grid-template-rows: minmax(56px, auto) 24px minmax(56px, auto);
+    margin-top: 12px;
+    row-gap: 6px;
+  }
+  .dt-axis2-labels {
+    position: relative;
+    min-height: 56px;
+  }
+  .dt-axis2-track {
+    position: relative;
+  }
+  .dt-axis2-line {
+    position: absolute;
+    left: 0; right: 0; top: 50%;
+    height: 1.5px;
+    background: var(--ink);
+    transform: translateY(-50%) scaleX(var(--scale, 1));
+    transform-origin: left;
+    transition: transform 0.55s cubic-bezier(.2,.7,.2,1) 0.05s;
+  }
+  .dt-axis2-tick {
+    position: absolute;
+    top: 50%;
+    width: 1px; height: 10px;
+    background: var(--rule);
+    transform: translate(-50%, -50%);
+  }
+  .dt-axis2-dot {
+    position: absolute;
+    top: 50%;
+    width: 12px; height: 12px;
+    border-radius: 99px;
+    transform: translate(-50%, -50%);
+    transition: opacity 0.4s ease;
+  }
+  .dt-axis2-dot.big {
+    width: 16px; height: 16px;
+    border: 2.5px solid var(--paper);
+    box-shadow: 0 0 0 2px var(--ink);
+  }
+  .dt-axis2-label {
+    position: absolute;
+    transform: translateX(-50%);
+    text-align: center;
+    white-space: nowrap;
+    transition: opacity 0.4s ease;
+  }
+  .dt-axis2-labels.top .dt-axis2-label { bottom: 0; }
+  .dt-axis2-labels.bottom .dt-axis2-label { top: 0; }
+
+  .dt-paper-tnum { font-variant-numeric: tabular-nums; }
+
+  /* =================================================================
+     Doc layout — used by Méthode and À propos pages.
+     ================================================================= */
+  .dt-doc {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+    gap: clamp(32px, 4vw, 80px);
+    padding: clamp(24px, 4vh, 64px) 0 64px;
+  }
+  .dt-doc-hero {
+    border-bottom: 1px solid var(--rule-soft);
+    padding-bottom: clamp(20px, 3vh, 36px);
+    margin-bottom: clamp(24px, 4vh, 48px);
+  }
+  .dt-doc-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-bottom: 16px;
+  }
+  .dt-doc-hero h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(40px, 5vw, 64px);
+    line-height: 1;
+    letter-spacing: -0.035em;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .dt-doc-lede {
+    margin-top: 20px;
+    font-size: clamp(18px, 1.4vw, 22px);
+    line-height: 1.45;
+    color: var(--ink-soft);
+    max-width: 720px;
+    text-wrap: balance;
+  }
+  .dt-doc-section { margin-bottom: 44px; }
+  .dt-doc-section:last-child { margin-bottom: 0; }
+  .dt-doc-section h2 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 26px;
+    letter-spacing: -0.02em;
+    margin: 0 0 18px;
+    text-wrap: balance;
+  }
+  .dt-doc-section h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 18px;
+    letter-spacing: -0.01em;
+    margin: 24px 0 8px;
+  }
+  .dt-doc-section p {
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    margin: 0 0 14px;
+    max-width: 68ch;
+  }
+  .dt-doc-section p strong { color: var(--ink); font-weight: 600; }
+  .dt-doc-section p a {
+    color: var(--ink);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-color: var(--rule);
+  }
+  .dt-doc-section p a:hover { text-decoration-color: var(--coral); }
+  .dt-doc-section ul {
+    margin: 0 0 16px;
+    padding: 0;
+    list-style: none;
+  }
+  .dt-doc-section ul li {
+    position: relative;
+    padding: 10px 0 10px 22px;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    border-bottom: 1px solid var(--rule-soft);
+  }
+  .dt-doc-section ul li:last-child { border-bottom: 0; }
+  .dt-doc-section ul li::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 18px;
+    width: 8px; height: 8px;
+    border-radius: 2px;
+    background: var(--coral);
+  }
+  .dt-doc-section ul li strong { color: var(--ink); font-weight: 600; }
+  .dt-doc-section blockquote {
+    margin: 16px 0;
+    padding: 16px 20px;
+    border-left: 3px solid var(--coral);
+    background: rgba(232,134,124,0.06);
+    border-radius: 4px;
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--ink);
+  }
+
+  .dt-doc-aside {
+    align-self: start;
+    position: sticky;
+    top: 88px;
+    padding: 24px;
+    border: 1.5px solid var(--ink);
+    border-radius: 20px;
+    background: var(--paper);
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+  .dt-doc-aside h3 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: -0.01em;
+    margin: 0 0 12px;
+  }
+  .dt-doc-aside ul { list-style: none; padding: 0; margin: 0; }
+  .dt-doc-aside ul li { padding: 6px 0; font-size: 13px; line-height: 1.5; color: var(--ink-soft); }
+  .dt-doc-aside ul li strong { color: var(--ink); font-weight: 600; display: block; font-size: 14px; }
+  .dt-doc-aside a {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-top: 16px;
+    font-size: 13px;
+    color: var(--ink);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .dt-src-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 20px 0 24px;
+  }
+  .dt-src-stat {
+    padding: 14px 16px;
+    border: 1px solid var(--rule-soft);
+    border-radius: 14px;
+    background: var(--cream-warm);
+    display: flex; flex-direction: column;
+  }
+  .dt-src-stat strong {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 28px;
+    line-height: 1;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+  }
+  .dt-src-stat span {
+    margin-top: 6px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+
+  .dt-src-families {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+    margin-top: 4px;
+  }
+  .dt-src-family {
+    padding: 18px 20px 16px;
+    border: 1px solid var(--rule-soft);
+    border-radius: 16px;
+    background: var(--paper);
+  }
+  .dt-src-family-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 12px;
+  }
+  .dt-src-family-head h3 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 17px;
+    margin: 0;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+  .dt-src-family-count {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-mute);
+    flex-shrink: 0;
+    letter-spacing: 0.04em;
+  }
+  .dt-src-family-tagline {
+    margin: 6px 0 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+  }
+  .dt-src-chips {
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .dt-src-chips--hidden {
+    margin-top: 8px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--rule-soft);
+  }
+  .dt-src-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 11px;
+    border-radius: 999px;
+    background: var(--cream-warm);
+    border: 1px solid var(--rule-soft);
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.2;
+  }
+  .dt-src-chip--lead {
+    background: var(--coral);
+    border-color: var(--coral);
+    color: white;
+  }
+  .dt-src-chip-n {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    opacity: 0.55;
+  }
+  .dt-src-chip--lead .dt-src-chip-n { opacity: 0.85; }
+  .dt-src-chip-more {
+    padding: 5px 11px;
+    border: 1px dashed var(--rule-soft);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--ink-mute);
+    font-size: 13px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .dt-src-chip-more:hover { color: var(--ink); border-color: var(--ink); }
+
+  /* =================================================================
+     Stats page — hero 2-col grid (éditorial à gauche, carte méta à droite)
+     L'aside affiche statut sync + dernière session + tuiles favoris/défis,
+     pour ne pas laisser la moitié droite du hero vide. Les visus de
+     données (KPI band, par thème, par format) restent à pleine largeur
+     dessous — l'aside ne s'étend PAS sous le hero.
+     ================================================================= */
+  .dt-stats-hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(280px, 360px);
+    /* Row gap modeste (28px) pour rapprocher le KPI band du hero ; col gap
+       plus large (40-80px) pour respiration latérale entre éditorial et
+       aside. */
+    gap: 28px clamp(40px, 5vw, 80px);
+    align-items: start;
+  }
+  .dt-stats-hero-head { grid-column: 1; grid-row: 1; }
+  .dt-stats-hero-kpi  { grid-column: 1; grid-row: 2; min-width: 0; }
+  .dt-stats-aside {
+    grid-column: 2;
+    /* Span sur les 2 lignes (header + KPI band) pour que la hauteur de
+       l'aside s'aligne sur celle de la colonne de gauche — évite le gros
+       trou qu'on avait quand l'aside était seul sur sa ligne. */
+    grid-row: 1 / span 2;
+    /* align-self hérite de `align-items: start` du grid container : la carte
+       reste à sa hauteur naturelle. Si col 1 (header + KPI band) est plus
+       haute, l'espace sous l'aside est juste l'arrière-plan crème de la
+       page — pas une zone "vide" perçue comme un trou. */
+    background: var(--cream-warm);
+    border: 1.5px solid var(--rule-soft);
+    border-radius: 20px;
+    padding: 24px 24px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .dt-stats-aside-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  .dt-stats-aside-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .dt-stats-aside-label {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  .dt-stats-aside-value {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: -0.01em;
+  }
+  .dt-stats-aside-sub {
+    font-size: 12px;
+    color: var(--ink-soft);
+    font-family: var(--font-body);
+  }
+  .dt-stats-aside-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--ink-mute);
+    flex-shrink: 0;
+  }
+  .dt-stats-aside-dot[data-on="true"] { background: var(--signal-good); }
+  .dt-stats-aside-link {
+    margin-top: 6px;
+    align-self: flex-start;
+    background: transparent;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    color: var(--coral);
+    font-family: var(--font-body);
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .dt-stats-aside-link:hover { color: var(--ink); }
+  .dt-stats-aside-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 4px;
+  }
+  .dt-stats-aside-tile {
+    background: var(--paper);
+    border: 1px solid var(--rule-soft);
+    border-radius: 14px;
+    padding: 12px 14px;
+    text-align: left;
+    cursor: pointer;
+    transition: transform 0.12s, border-color 0.12s;
+    font: inherit;
+  }
+  .dt-stats-aside-tile:hover:not(:disabled) {
+    transform: translateY(-1px);
+    border-color: var(--rule);
+  }
+  .dt-stats-aside-tile:disabled { cursor: default; }
+  .dt-stats-aside-tile-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  .dt-stats-aside-tile-value {
+    margin-top: 6px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+
+  /* =================================================================
+     Account page — desktop 2-col grid
+     Hero éditorial à gauche, panneau form/auth à droite. Avant on empilait
+     tout dans une seule colonne max-width 720 et la moitié droite de
+     l'écran restait vide en >= 1100px.
+     ================================================================= */
+  .dt-account-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(420px, 540px);
+    gap: clamp(48px, 6vw, 96px);
+    align-items: start;
+    padding-top: clamp(16px, 3vh, 48px);
+  }
+  .dt-account-hero {
+    /* Sticky pour rester à hauteur du form quand celui-ci scrolle (signup
+       fait ~5-6 champs + warning + bouton, peut dépasser le hero en hauteur). */
+    position: sticky;
+    top: 88px;
+  }
+  .dt-account-panel {
+    /* Petit décalage vertical : le mono "Mon compte" du hero a 11px+12px de
+       descente avant le H1 ; le panneau s'aligne approximativement sur le
+       baseline du H1 sans avoir à appliquer un offset négatif fragile. */
+    padding-top: 4px;
+  }
+
+  /* =================================================================
+     Themes index page
+     ================================================================= */
+  /* Padding asymétrique top vs bottom : bottom généreux (64px) pour éviter
+     que le footer Méthode/À propos colle la dernière carte. Top contenu :
+     `.dt-content` apporte déjà ~13–22px de padding-top, on ajoute juste un
+     petit complément ici (16–24px) sans compounding excessif. Avant on
+     mettait clamp(40,6vh,64) — combiné à dt-content ça donnait 62-96px en
+     haut, beaucoup trop pour une page de découverte. */
+  .dt-themes-page { padding: clamp(16px, 2vh, 24px) 0 64px; }
+  .dt-themes-page-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin-top: 32px;
+  }
+  .dt-themes-card {
+    position: relative;
+    border-radius: 22px;
+    border: 1.5px solid var(--ink);
+    padding: 24px 26px 22px;
+    min-height: 200px;
+    display: flex; flex-direction: column;
+    text-align: left;
+    font-family: var(--font-display);
+    box-shadow: 4px 4px 0 var(--ink);
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+  }
+  .dt-themes-card:hover:not([disabled]) {
+    transform: translate(-2px, -2px);
+    box-shadow: 7px 7px 0 var(--ink);
+  }
+  .dt-themes-card[disabled] {
+    background: var(--cream-warm) !important;
+    border-style: dashed;
+    box-shadow: none;
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+  .dt-themes-card .tag {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    opacity: 0.7;
+    margin-bottom: 8px;
+  }
+  .dt-themes-card .name {
+    font-weight: 700;
+    font-size: 26px;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    /* Réserve la place de l'illustration (coin haut-droit) pour qu'un
+       libellé long ne passe jamais dessous sur les cartes étroites. */
+    padding-right: 104px;
+  }
+  .dt-themes-card .art {
+    position: absolute;
+    top: 14px;
+    right: 18px;
+    width: 112px;
+    height: 112px;
+  }
+  .dt-themes-card .count {
+    margin-top: auto;
+    padding-top: 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 13px;
+  }
+  .dt-themes-card .count .play {
+    width: 36px; height: 36px;
+    border-radius: 12px;
+    background: var(--ink);
+    color: var(--yellow);
+    display: grid; place-items: center;
+  }
+}
+
+/* =================================================================
+   Doc + themes adjustments for tablet & mobile fallback
+   ================================================================= */
+@media (min-width: 768px) and (max-width: 1023.9px) {
+  .dt-doc { grid-template-columns: 1fr; gap: 32px; }
+  .dt-doc-aside { position: static; }
+  .dt-themes-page-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 767.9px) {
+  /* The mobile shell handles its own doc/themes layout via inline styles
+     in the screen components — nothing to do here. */
+}
+
+/* Hide desktop classes/divs on phone-size viewports (the JS chooses mobile
+   anyway, but this keeps the DOM clean if anything slips through). */
+@media (max-width: 767.9px) {
+  .dt-nav, .dt-page, .dt-content, .dt-scene-nav { display: none !important; }
+}
+
+/* Symétrique : le SSR ignore la largeur du viewport — useIsDesktop revient
+   donc à `false` côté serveur, et le HTML envoyé contient toujours la
+   coquille mobile. Sans ce garde-fou, les desktops voient un flash du
+   composant mobile étiré pleine largeur avant que React re-render la
+   branche desktop après hydration. */
+@media (min-width: 768px) {
+  .app-shell { display: none !important; }
+}
+
+/* ===================================================================
+   TABLET ADJUSTMENTS (768 ≤ viewport < 1024)
+   Compress the desktop layout to fit narrower screens.
+   =================================================================== */
+@media (min-width: 768px) and (max-width: 1023.9px) {
+  .dt-nav-inner { padding: 0 20px; }
+  /* Items de nav resserrés pour rester lisibles à 768px : la BottomTabBar
+     est déjà cachée par la rule `@media (min-width: 768px)` plus haut, donc
+     les liens du header sont la SEULE affordance de navigation dans cette
+     tranche. Les masquer ici (comme c'était le cas avant) laissait l'utilisateur
+     sans aucune nav entre 768 et 1023 — bug observé en navigation tablet. */
+  .dt-nav-left { gap: 18px; }
+  .dt-nav-links { gap: 14px; }
+  /* Inline display:flex from the JSX needs !important to be overridden. */
+  .dt-nav-right .nav-meta { display: none !important; }
+  .dt-content { padding: 24px 20px 48px; }
+
+  /* Hero : stack en colonne, plus de cards en collage */
+  .dt-hero {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding: 32px 0 24px;
+  }
+  .dt-hero h1 { font-size: clamp(40px, 7vw, 56px); }
+  .dt-hero-sub { font-size: 17px; max-width: none; }
+  .dt-hero-cards {
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 0 8px;
+  }
+  .dt-fact-wrap {
+    position: static !important;
+    width: 100% !important;
+    transform: none !important;
+    max-width: 480px;
+    margin: 0 auto;
+    /* En tablet les cards sont en stack — pas de flottement (ça donnerait
+       un balancement bizarre dans une colonne). Drop léger uniquement. */
+    animation: home-fade-up 0.6s cubic-bezier(.2,.7,.2,1) backwards !important;
+  }
+  .dt-fact-wrap--c1 { animation-delay: 0.15s !important; }
+  .dt-fact-wrap--c2 { animation-delay: 0.25s !important; }
+  .dt-fact-wrap--c3 { animation-delay: 0.35s !important; }
+
+  /* Home : tiles en grille 2-col, le grand sur full width */
+  .dt-menu-grid { grid-template-columns: 1fr 1fr; }
+  .dt-menu-grid > :first-child { grid-column: 1 / -1; }
+  .dt-tile h3 { font-size: 26px; }
+  .dt-greeting { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .dt-greeting h1 { font-size: 38px; }
+  .dt-greeting-meta { text-align: left; }
+  .dt-theme-grid { grid-template-columns: repeat(3, 1fr); }
+  .dt-defi-banner { grid-template-columns: 1fr; padding: 24px; gap: 18px; }
+
+  /* Question (focus) : colonne et barre de question resserrées. */
+  .dt-focus {
+    grid-template-columns: 1fr;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .dt-question-bar { max-width: 600px; }
+  .dt-question { font-size: clamp(28px, 4vw, 36px); }
+  .dt-estimate-display { margin: 32px 0 16px; }
+  .dt-estimate-display .big { font-size: 80px; }
+  .dt-estimate-display .unit { font-size: 32px; }
+  .dt-tf-btn { padding: 56px 24px; font-size: 40px; }
+  .dt-tf-grid { gap: 16px; margin-top: 32px; }
+  .dt-ab-grid { gap: 14px; margin-top: 32px; }
+  .dt-ab-card { min-height: 180px; padding: 24px; }
+  .dt-ab-card .lbl { font-size: 22px; }
+
+  /* Recap : grille 3 cols */
+  .dt-recap-grid { grid-template-columns: repeat(3, 1fr); }
+  .dt-recap-cell { min-height: 220px; padding: 20px; }
+  .dt-recap-cell .fig { font-size: 32px; }
+
+  /* Challenge : stack vertical */
+  .dt-challenge { grid-template-columns: 1fr; gap: 32px; }
+}
+
+/* =================================================================
+   App modal — composant générique (cf. components/modal.tsx).
+   Toute modal de l'app (Compte, Défi, …) hérite de ces styles.
+   ================================================================= */
+.app-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  /* Calé sur le viewport VISUEL quand Modal pose --app-vv-* (visualViewport) :
+     clavier mobile ouvert, le backdrop rétrécit à la zone visible, la carte
+     s'y recentre et défile en interne — le champ actif et le bouton d'envoi
+     ne passent plus sous le clavier. Sans les variables : plein écran. */
+  top: var(--app-vv-top, 0px);
+  bottom: auto;
+  height: var(--app-vv-height, 100%);
+  background: rgba(20, 17, 14, 0.55);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  /* La modal peut être rendue comme enfant d'un parent qui a
+     `white-space: nowrap` (ex : `.dt-nav-right` inline). On reset
+     ici pour que les paragraphes wrappent normalement à l'intérieur. */
+  white-space: normal;
+  text-align: left;
+}
+.app-modal {
+  position: relative;
+  background: var(--cream-warm);
+  border: 1.5px solid var(--ink);
+  border-radius: 22px;
+  box-shadow: 6px 6px 0 var(--ink);
+  padding: 28px 28px 24px;
+  width: 100%;
+  max-height: calc(var(--app-vv-height, 100dvh) - 32px);
+  /* Override `overflow-y: auto`'s implicit `overflow-x: auto` so on
+     occasional long words we clip rather than scroll horizontally. */
+  overflow: hidden auto;
+  font-family: var(--font-body);
+  color: var(--ink);
+
+  /* Scrollbar custom (Firefox). `thin` réduit la largeur native ;
+     `scrollbar-color` pose thumb sur fond. */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(26, 26, 26, 0.25) transparent;
+  /* Réserve la gouttière même quand le scroll n'est pas nécessaire,
+     pour éviter un saut de layout à l'ouverture / fermeture. */
+  scrollbar-gutter: stable;
+}
+.app-modal-sm { max-width: 360px; }
+.app-modal-md { max-width: 460px; }
+.app-modal-lg { max-width: 640px; }
+
+/* Entrée : l'overlay se fond, la carte « pope » (monte, grossit, léger
+   rebond). Sortie plus brève, sans rebond : Modal garde le DOM EXIT_MS
+   (160 ms) avec data-state="closing". En entrée, `backwards` et non `both`
+   pour que la carte ne garde pas de transform une fois posée.
+   Mouvement réduit : la règle globale rend tout instantané. */
+.app-modal-backdrop {
+  animation: app-modal-fade-in 0.2s ease-out backwards;
+}
+.app-modal {
+  animation: app-modal-pop-in 0.3s cubic-bezier(.2, .7, .2, 1) backwards;
+}
+.app-modal-backdrop[data-state="closing"] {
+  animation: app-modal-fade-out 0.16s ease-in forwards;
+  pointer-events: none;
+}
+.app-modal-backdrop[data-state="closing"] .app-modal {
+  animation: app-modal-pop-out 0.16s ease-in forwards;
+}
+@keyframes app-modal-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes app-modal-fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+@keyframes app-modal-pop-in {
+  0%   { opacity: 0; transform: translateY(12px) scale(0.92); }
+  45%  { opacity: 1; }
+  70%  { transform: translateY(0) scale(1.015); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes app-modal-pop-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(6px) scale(0.96); }
+}
+
+/* Modal de partage déclenchée depuis l'action bar du reveal.
+   `share-modal-body` est juste un wrapper sémantique (la chrome modal —
+   bord, ombre, padding — vient de .app-modal). On stylise ici uniquement
+   les sous-éléments propres au contenu de partage. */
+.share-modal-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin-bottom: 10px;
+}
+/* (Le composant ShareQuestionModal a rapatrié l'étoile favori au niveau
+   du titre via inline-flex côté JSX — pas besoin de .share-modal-header
+   séparé. Préservé en commentaire au cas où on revienne à un header-
+   action séparé.) */
+/* Pastille d'affichage de la réponse correcte dans ShareQuestionModal.
+   Background + border teintés par la closeness (vert/orange/rouge) pour
+   donner le contexte de perf au coup d'œil. Le contenu est dense (label
+   "Réponse" + valeur en grand) — padding généreux pour aérer. */
+.share-modal-answer {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border: 1.5px solid;
+  border-radius: 12px;
+}
+.share-modal-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin: 0;
+  text-wrap: balance;
+  color: var(--ink);
+}
+.share-modal-sub {
+  margin-top: 12px;
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-style: italic;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+.share-modal-url {
+  margin-top: 18px;
+  padding: 12px 14px;
+  background: var(--paper);
+  border: 1.5px solid var(--rule);
+  border-radius: 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-soft);
+  letter-spacing: 0.02em;
+  word-break: break-all;
+  user-select: all;
+}
+.share-modal-actions {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.share-modal-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--ink);
+  color: var(--cream-warm);
+  border: 0;
+  border-radius: 14px;
+  padding: 14px 18px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+.share-modal-primary:hover { background: #000; }
+.share-modal-primary:active { transform: scale(0.985); }
+/* État "copié" : passe en vert pour confirmation visuelle franche.
+   data-attr plutôt qu'un className séparé pour rester aligné avec le
+   pattern toggle du composant React. */
+/* Désactivé (ex. « Envoyer aux contributeurs » tant que le message est trop
+   court) : même langage que .btn-primary[disabled] — contour seul, texte
+   atténué. Avant, le bouton désactivé était identique au bouton actif. L'état
+   « envoi en cours » garde son propre rendu (data-loading, plus bas). */
+.share-modal-primary:disabled:not([data-loading="true"]) {
+  background: transparent;
+  color: var(--ink-mute);
+  box-shadow: inset 0 0 0 1.5px var(--rule);
+  cursor: not-allowed;
+  transform: none;
+}
+.share-modal-primary[data-copied="true"] {
+  background: rgba(74, 143, 92, 0.16);
+  color: var(--signal-good-ink);
+  border: 1.5px solid rgba(74, 143, 92, 0.45);
+}
+.share-modal-primary[data-copied="true"]:hover {
+  background: rgba(74, 143, 92, 0.22);
+}
+.share-modal-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: transparent;
+  color: var(--ink);
+  border: 1.5px solid var(--rule);
+  border-radius: 14px;
+  padding: 12px 18px;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.share-modal-secondary:hover {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: var(--ink-soft);
+}
+/* Champ texte dans la modal session-share (saisie du prénom du créateur).
+   Style aligné sur .account-modal-field pour cohérence visuelle. */
+.share-modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 18px;
+}
+.share-modal-field > span {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+.share-modal-field input {
+  background: var(--paper);
+  border: 1.5px solid var(--rule);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.share-modal-field input:focus {
+  border-color: var(--ink);
+}
+/* Récap pseudo replié quand l'utilisateur est connecté : pas de gros input,
+   juste une ligne discrète "Tu envoies comme X · modifier". Le clic sur
+   "modifier" déplie l'input éditable plein format. */
+.share-modal-identity {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+  padding: 12px 14px;
+  background: var(--cream-warm);
+  border: 1.5px solid var(--rule-soft);
+  border-radius: 12px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+.share-modal-identity strong {
+  color: var(--ink);
+  font-weight: 700;
+}
+.share-modal-link {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--coral);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.share-modal-link:hover { color: var(--ink); }
+/* État "création en cours" du bouton primaire — légère atténuation +
+   cursor wait, mais on garde la couleur ink pour ne pas faire croire à
+   un état désactivé permanent. */
+.share-modal-primary[data-loading="true"] {
+  opacity: 0.65;
+  cursor: wait;
+}
+/* Message d'erreur (création de défi échouée). Coloration discrète, pas
+   d'icône — l'utilisateur a le bouton "Réessayer" juste en-dessous. */
+.share-modal-error {
+  margin-top: 18px;
+  padding: 12px 14px;
+  background: rgba(199, 93, 93, 0.08);
+  border: 1.5px solid rgba(199, 93, 93, 0.35);
+  border-radius: 12px;
+  font-size: 13px;
+  color: var(--signal-bad-ink);
+  line-height: 1.4;
+}
+
+/* Scrollbar custom (Chromium / Safari). Track invisible, thumb arrondi
+   couleur ink avec opacité faible. Marge en haut/bas pour que le
+   thumb ne touche jamais les coins arrondis. */
+.app-modal::-webkit-scrollbar {
+  width: 8px;
+}
+.app-modal::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 12px 0;
+}
+.app-modal::-webkit-scrollbar-thumb {
+  background: rgba(26, 26, 26, 0.18);
+  border-radius: 99px;
+  /* Padding effectif via border transparent : thumb visuellement ~4px,
+     sans toucher le bord droit. */
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.app-modal::-webkit-scrollbar-thumb:hover {
+  background: rgba(26, 26, 26, 0.32);
+  background-clip: padding-box;
+}
+
+.app-modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1;
+  color: var(--ink-soft);
+  border-radius: 99px;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  opacity: 0.75;
+  transition: opacity 0.12s, color 0.12s, background-color 0.12s;
+}
+.app-modal-close:hover {
+  color: var(--ink);
+  opacity: 1;
+  background: rgba(26, 26, 26, 0.06);
+}
+.account-modal-tabs {
+  display: flex;
+  gap: 6px;
+  background: var(--cream-deep);
+  border-radius: 99px;
+  padding: 4px;
+  margin-bottom: 20px;
+}
+.account-modal-tab {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  border-radius: 99px;
+  padding: 8px 14px;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.account-modal-tab.active {
+  background: var(--ink);
+  color: var(--cream-warm);
+  font-weight: 600;
+}
+.account-modal-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 26px;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  margin: 0 0 10px;
+  text-wrap: balance;
+}
+.account-modal-sub {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  margin: 0 0 18px;
+}
+/* Warning compte : auparavant box jaune pleine ("Pas de récupération
+   possible" en strong block). Visuellement trop anxiogène pour un message
+   d'info — tonner l'utilisateur alors qu'il découvre le formulaire pouvait
+   le décourager de créer un compte. Version actuelle : bord gauche jaune
+   en accent (callout léger), pas de fond saturé, strong inline. */
+.account-modal-warning {
+  background: rgba(255, 200, 69, 0.08);
+  border-left: 3px solid var(--yellow-deep);
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  margin: 0 0 18px;
+}
+.account-modal-warning strong { color: var(--ink); font-weight: 600; }
+
+.account-modal-field {
+  display: block;
+  margin-bottom: 14px;
+}
+.account-modal-field > span {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  letter-spacing: 0.02em;
+  margin-bottom: 6px;
+}
+.account-modal-field input {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1.5px solid var(--rule);
+  background: var(--paper);
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.12s;
+}
+.account-modal-field input:focus {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px rgba(26, 26, 26, 0.08);
+}
+.account-modal-field input[aria-invalid="true"] {
+  border-color: var(--signal-bad);
+}
+.account-modal-hint {
+  display: block;
+  font-size: 11.5px;
+  color: var(--ink-mute);
+  margin-top: 5px;
+  line-height: 1.4;
+}
+
+.account-modal-check {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  margin: 10px 0 18px;
+  cursor: pointer;
+}
+.account-modal-check input {
+  margin-top: 3px;
+  accent-color: var(--ink);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+/* Flex items default to `min-width: auto` — pour le span de texte ça
+   se traduit par "ne shrink jamais en dessous du contenu intrinsèque",
+   donc une longue phrase déborde la modal. On force min-width: 0 +
+   flex: 1 pour autoriser le wrap. */
+.account-modal-check > span {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.account-modal-error {
+  background: rgba(199, 93, 93, 0.10);
+  border: 1.5px solid rgba(199, 93, 93, 0.55);
+  color: var(--signal-bad-ink);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+.account-modal-primary {
+  width: 100%;
+  background: var(--ink);
+  color: var(--cream-warm);
+  border: 0;
+  border-radius: 14px;
+  padding: 14px 18px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+}
+.account-modal-primary:hover { background: #000; }
+.account-modal-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+.account-modal-secondary {
+  width: 100%;
+  background: transparent;
+  color: var(--ink);
+  border: 1.5px solid var(--ink);
+  border-radius: 14px;
+  padding: 12px 18px;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 15px;
+  cursor: pointer;
+  margin-top: 6px;
+}
+.account-modal-secondary:hover { background: rgba(26, 26, 26, 0.06); }
+.account-modal-info {
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+  background: var(--paper);
+  border: 1px solid var(--rule-soft);
+  border-radius: 12px;
+  margin-bottom: 18px;
+}
+.account-modal-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  font-family: var(--font-mono);
+}
+.account-modal-value {
+  font-size: 14px;
+  color: var(--ink);
+  margin-top: 2px;
+}
+.account-modal-fine {
+  font-size: 12px;
+  color: var(--ink-mute);
+  line-height: 1.45;
+  margin: 14px 0 0;
+}
+
+/* Utilitaire : cache la scrollbar visible des conteneurs scrollables
+   horizontaux (tabs mobiles, chips). L'interaction (swipe + scroll wheel)
+   reste fonctionnelle ; on retire juste le tracé. */
+.hide-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+
+/* ThemeTile (defi A2) hover : lift + bordure ink. Avant en setState JS —
+   maintenant en CSS pur, plus de re-render au mouseenter/leave. La variante
+   .theme-tile-disabled neutralise le hover quand empty ou disabled. */
+.theme-tile:hover:not(.theme-tile-disabled),
+.theme-tile:focus-visible:not(.theme-tile-disabled) {
+  border-color: var(--ink) !important;
+  border-width: 2px !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px -6px rgba(26, 26, 26, 0.25);
+}
+
+/* SourceRadio (defi A1) hover : même pattern. focus-within parce que le
+   focus est sur le <button> interne, pas sur le wrapper. */
+.source-radio:hover:not(.source-radio-disabled),
+.source-radio:focus-within:not(.source-radio-disabled) {
+  border-color: var(--ink) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px -8px rgba(26, 26, 26, 0.3);
+}
+
+/* ============================================================================
+   Prompt d'installation PWA — bannière mobile-only au-dessus de la bottom
+   tab bar. Apparaît quand l'event beforeinstallprompt est capté et que
+   l'utilisateur a répondu à au moins 1 question.
+   Desktop : le composant InstallPrompt retourne null, donc cette CSS n'est
+   appliquée que sur mobile par construction.
+   ========================================================================== */
+.install-prompt {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  /* Au-dessus de la bottom-tab-bar (60px + safe-area) + un peu d'air. */
+  bottom: calc(var(--bottom-tab-bar-height, 60px) + env(safe-area-inset-bottom, 0px) + 10px);
+  z-index: 60;
+  pointer-events: none;
+  animation: install-prompt-enter 0.4s cubic-bezier(.2, .7, .2, 1) both;
+}
+@keyframes install-prompt-enter {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+.install-prompt-inner {
+  pointer-events: auto;
+  background: var(--ink);
+  color: var(--cream-warm);
+  border-radius: 16px;
+  padding: 14px 16px;
+  box-shadow: 0 12px 28px -10px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.install-prompt-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14.5px;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+.install-prompt-sub {
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  margin-top: 3px;
+  opacity: 0.78;
+  line-height: 1.4;
+}
+.install-prompt-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.install-prompt-secondary {
+  background: transparent;
+  color: var(--cream-warm);
+  border: 0;
+  padding: 8px 14px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  opacity: 0.7;
+}
+.install-prompt-secondary:hover { opacity: 1; }
+.install-prompt-primary {
+  background: var(--yellow);
+  color: var(--ink);
+  border: 0;
+  border-radius: 10px;
+  padding: 8px 18px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* ============================================================================
+   Bottom tab bar mobile — navigation principale (4 verbes).
+   Fixed bottom, prend en compte le safe-area iOS, hidden sur desktop.
+   ========================================================================== */
+
+/* Hauteur effective de la barre (sans safe-area). Exposée en custom property
+   pour que les conteneurs scrollables puissent prévoir un padding-bottom
+   équivalent sans hardcoder. */
+:root {
+  --bottom-tab-bar-height: 60px;
+}
+
+.bottom-tab-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  display: flex;
+  align-items: stretch;
+  background: var(--cream-warm);
+  border-top: 1px solid var(--rule-soft);
+  /* Safe-area iOS — bord bas de la navigation gestuelle. */
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  /* On boost le contraste de l'ombre vers le haut pour décoller la barre
+     visuellement du contenu qui défile derrière. */
+  box-shadow: 0 -2px 8px rgba(26, 26, 26, 0.04);
+  font-family: var(--font-display);
+}
+
+/* Sur desktop on n'affiche jamais la barre — la nav vit en haut via AppNav. */
+@media (min-width: 768px) {
+  .bottom-tab-bar { display: none; }
+}
+
+.bottom-tab {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: var(--bottom-tab-bar-height);
+  background: transparent;
+  border: 0;
+  padding: 6px 4px 8px;
+  color: var(--ink-mute);
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.01em;
+  transition: color 0.18s;
+  /* Pas de tap highlight bleu sur mobile. */
+  -webkit-tap-highlight-color: transparent;
+}
+/* :hover seulement sur les appareils qui survolent vraiment : sur écran
+   tactile, le dernier onglet touché gardait un :hover « collant » et
+   s'affichait foncé comme s'il était actif (ex. « Réviser » sur le récap). */
+@media (hover: hover) {
+  .bottom-tab:hover { color: var(--ink); }
+}
+.bottom-tab:focus-visible { color: var(--ink); }
+.bottom-tab.active { color: var(--ink); font-weight: 600; }
+
+.bottom-tab-icon {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+}
+.bottom-tab-icon svg { width: 100%; height: 100%; }
+
+.bottom-tab-label {
+  /* Évite que les labels descendent sous deux lignes sur petits écrans. */
+  white-space: nowrap;
+}
+
+/* Magic underline : barre fine au-dessus du tab actif, animée via
+   framer-motion layoutId. Couleur coral pour cohérence avec l'AppNav DT. */
+.bottom-tab-indicator {
+  position: absolute;
+  top: 0;
+  left: 18%;
+  right: 18%;
+  height: 2px;
+  background: var(--coral);
+  border-radius: 0 0 2px 2px;
+}
+
+/* Padding-bottom global pour les conteneurs scrollables qui veulent réserver
+   de l'air en bas de page :
+   - sur mobile, on inclut la hauteur de la BottomTabBar fixe + safe-area
+     pour que le contenu ne soit pas masqué par la barre ;
+   - à partir de 768px (BottomTabBar cachée), on garde un padding-bottom
+     symétrique au padding-top usuel pour ne pas coller le dernier élément
+     au bord du viewport. Avant on remettait à 0 ici parce que l'unique
+     consumer (AppShell) est `display: none !important` au-dessus de
+     768px ; mais la classe est aussi utilisée sur des pages standalone
+     (ex : /q/[slug] step share) qui restent visibles en desktop. */
+.with-bottom-bar {
+  padding-bottom: calc(var(--bottom-tab-bar-height) + env(safe-area-inset-bottom, 0px) + 8px);
+}
+@media (min-width: 768px) {
+  .with-bottom-bar { padding-bottom: 32px; }
+}
+
+/* Cartes "Choisis une comparaison" sur /resultats — hover visible (ink border
+   + cream-warm + petit lift + ombre offset) parce que l'hover doux sur un
+   simple changement de border passait inaperçu, et la page se lit comme une
+   liste cliquable. Focus-visible miroir du hover pour clavier. */
+.defi-response-card:hover {
+  border-color: var(--ink) !important;
+  background: var(--cream-warm) !important;
+  transform: translateY(-1px);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+.defi-response-card:focus-visible {
+  outline: none;
+  border-color: var(--ink) !important;
+  background: var(--cream-warm) !important;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+.defi-response-card:active {
+  transform: translateY(0);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+
+/* Suppression de compte (RGPD) — repliée par défaut, dépliée après clic sur
+   "Supprimer mon compte". Style "zone dangereuse" pour signaler l'action
+   destructive. */
+.account-modal-link {
+  display: inline-block;
+  margin-top: 18px;
+  background: transparent;
+  border: 0;
+  padding: 4px 0;
+  color: var(--ink-mute);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.account-modal-link:hover { color: var(--coral); }
+.account-modal-danger {
+  margin-top: 18px;
+  padding: 16px;
+  background: rgba(199, 93, 93, 0.06);
+  border: 1.5px solid rgba(199, 93, 93, 0.35);
+  border-radius: 14px;
+}
+.account-modal-danger-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--coral);
+  margin-bottom: 6px;
+}
+.account-modal-danger-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.account-modal-ghost {
+  flex: 1;
+  background: transparent;
+  color: var(--ink);
+  border: 1.5px solid var(--rule);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+}
+.account-modal-ghost:hover { background: rgba(26, 26, 26, 0.04); }
+.account-modal-danger-confirm {
+  flex: 1;
+  background: var(--coral);
+  color: var(--cream-warm);
+  border: 1.5px solid var(--coral);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+}
+.account-modal-danger-confirm:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Styles internes du DossierPanel — partagés entre les deux surfaces.
+   Le conteneur .dossier-panel a sa propre règle dans @media (min-width: 768px)
+   (déplié vertical sous la scène) et dans @media (max-width: 767px) ci-dessous
+   (bottom sheet qui glisse depuis le bas). Les classes ci-dessous habillent
+   le CONTENU du panneau et fonctionnent quel que soit le format de présentation. */
+.dossier-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--ink);
+  color: var(--cream-warm);
+  padding: 4px 12px;
+  border-radius: 6px 6px 0 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.dossier-section {
+  margin-bottom: 28px;
+}
+/* Dossier chargé à part sur l'accueil (cf. lib/use-question-dossier.ts) :
+   en pratique il est prêt avant la réponse ; sinon, une ligne discrète. */
+.dossier-status {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-mute);
+  margin: 14px 0 20px;
+}
+.dossier-status-retry {
+  font: inherit;
+  color: var(--ink);
+  text-decoration: underline;
+  background: none;
+  border: 0;
+  padding: 4px 2px;
+  cursor: pointer;
+}
+.dossier-section h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin: 14px 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--rule-soft);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.dossier-section h3 .badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+}
+.dossier-section p {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--ink);
+  margin: 0;
+  text-wrap: pretty;
+}
+.dossier-section p.muted { color: var(--ink-soft); font-size: 14px; }
+
+/* "Mise en perspective" : variante visuelle pour décoller du paragraphe
+   d'explication standard et signaler "ici c'est une lecture relative, pas
+   la donnée brute". On garde la même typographie serif (cohérence du
+   dossier) mais on ajoute un fond crème-chaud + bord coral à gauche pour
+   un effet "callout éditorial" — l'œil sait que c'est de la mise en
+   perspective avant même de lire. */
+.dossier-perspective {
+  background: var(--cream-warm);
+  border-left: 3px solid var(--coral);
+  border-radius: 6px;
+  padding: 4px 16px 4px;
+}
+.dossier-perspective h3 {
+  border-bottom-color: transparent;
+  margin-top: 10px;
+}
+.dossier-perspective p {
+  color: var(--ink-soft);
+}
+.dossier-source {
+  display: block;
+  background: var(--cream-warm);
+  border: 1px solid var(--rule-soft);
+  border-radius: 12px;
+  padding: 14px 16px;
+  text-decoration: none;
+  color: var(--ink);
+  margin-bottom: 8px;
+  transition: background 0.15s, border-color 0.15s;
+}
+.dossier-source:hover {
+  background: #fff;
+  border-color: var(--rule);
+}
+.dossier-source-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.dossier-source-text { flex: 1; min-width: 0; }
+.dossier-source-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin-bottom: 4px;
+}
+.dossier-source-name {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+.dossier-source-arrow {
+  flex-shrink: 0;
+  color: var(--ink-mute);
+}
+.dossier-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+/* Pastilles d'items sur l'axe `question-curseur-multi`. Sur hover, on
+   bumpe le z-index pour passer au-dessus des voisines (utile quand les
+   chaînes de collision dépassent les 5 slots verticaux ou quand les
+   labels longs débordent) et on renforce l'ombre pour signaler le
+   "soulèvement" visuel. !important sur z-index : le style inline du
+   composant fixe zIndex à 1 (ou 5 si drag) et on doit pouvoir le
+   surcharger depuis CSS au survol. */
+.curseur-axis-badge:hover {
+  z-index: 20 !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22), 0 1px 0 var(--ink) !important;
+}
+
+/* Action bar du reveal desktop. Styles autonomes (pas d'héritage
+   `.btn-primary` qui imposerait `width: 100%`) pour avoir un contrôle
+   exact de la mise en page sur une seule rangée.
+   Layout :
+     [ Terminer ]                     [ Partager ] [ Suivant → ]
+     secondary link, gauche           outline       primaire
+   `Terminer` est en `margin-right: auto` pour pousser le groupe
+   `Partager + Suivant` à droite. Pas de `flex-wrap` : si jamais ça déborde
+   horizontalement, on laisse Suivant rétrécir via `min-width: 0` plutôt
+   que de wrapper sur une 2e ligne (anti-pattern UX qui fait penser que
+   Suivant est une action distincte).
+   Séparateur visuel haut (border + padding) pour bien marquer "ce bloc =
+   actions de sortie de session", différent du toggle Comparer qui vit dans
+   le reveal au-dessus (interaction de contenu). */
+.reveal-action-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: clamp(16px, 2.4vh, 28px);
+  padding-top: 16px;
+  border-top: 1px solid var(--rule-soft);
+}
+.reveal-action-end {
+  margin-right: auto;
+  background: transparent;
+  border: 0;
+  padding: 8px 2px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--ink-mute);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: var(--rule);
+  transition: color 0.15s, text-decoration-color 0.15s;
+  white-space: nowrap;
+}
+.reveal-action-end:hover {
+  color: var(--ink);
+  text-decoration-color: var(--ink-mute);
+}
+/* Si Terminer est absent (isLast), Partager + Suivant doivent rester collés
+   à droite. On le pousse via margin-left: auto sur le premier des deux —
+   `.reveal-action-bar:not(:has(.reveal-action-end)) .reveal-action-share`
+   est trop fragile ; on s'en remet à un layout qui marche dans les deux
+   cas grâce à `margin-left: auto` sur Partager. */
+.reveal-action-share {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1.5px solid var(--rule);
+  color: var(--ink);
+  padding: 10px 18px;
+  border-radius: 99px;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.reveal-action-bar:not(:has(.reveal-action-end)) .reveal-action-share {
+  margin-left: auto;
+}
+.reveal-action-share:hover {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: var(--ink-soft);
+}
+.reveal-action-next {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--ink);
+  color: var(--cream-warm);
+  border: 0;
+  padding: 12px 22px;
+  border-radius: 99px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, transform 0.1s;
+}
+.reveal-action-next:hover { background: #000; }
+.reveal-action-next:active { transform: scale(0.985); }
+.dossier-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  padding: 12px 20px;
+  border-radius: 99px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+.dossier-btn-primary:hover { background: #000; }
+.dossier-btn-primary:active { transform: scale(0.985); }
+.dossier-btn-secondary {
+  background: transparent;
+  border: 1.5px solid var(--rule);
+  color: var(--ink);
+  padding: 12px 18px;
+  border-radius: 99px;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.dossier-btn-secondary:hover { background: rgba(0, 0, 0, 0.04); }
+@media (min-width: 768px) {
+  .dossier-section h3 { font-size: 14px; }
+  .dossier-section p { font-size: 16px; }
+  .dossier-section p.muted { font-size: 15px; }
+  .dossier-source-name { font-size: 15px; }
+  .dossier-btn-primary, .dossier-btn-secondary { padding: 14px 22px; font-size: 15px; }
+}
+
+/* Bouton compact « Suivant » qui s'insère à droite du bandeau verdict, juste
+   sous les cartes/curseur. Permet d'avancer sans scroller jusqu'au dossier. */
+.verdict-next-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  padding: 9px 14px;
+  border-radius: 99px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.verdict-next-btn:hover { background: #000; }
+.verdict-next-btn:active { transform: scale(0.97); }
+@media (min-width: 768px) {
+  .verdict-next-btn { padding: 10px 16px; font-size: 14px; }
+}
+
+/* DossierPanel sur petit écran : TROIS états, gérés par DossierPanelMobile.
+   - .dossier-mobile-panel.peek : languette fixée en bas (ce que contient le
+     dossier + début du premier texte)
+   - .dossier-mobile-panel.half : ouvert seul à mi-hauteur à la phase
+     dossier, sans voile (le verdict reste visible au-dessus)
+   - .dossier-mobile-panel.full : sheet déplié 70dvh avec voile
+   L'action bar (Terminer + Suivant) est rendue séparément et reste sticky.
+   Le composant .dossier-panel original n'est plus utilisé en mobile : il
+   reste mounted uniquement en desktop (cf. media query above).
+*/
+@media (max-width: 767px) {
+  /* Container principal : positionné en bas, transition entre peek et expanded. */
+  .dossier-mobile-panel {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--reveal-action-bar-height) + env(safe-area-inset-bottom, 0px));
+    background: var(--paper);
+    border-top: 1.5px solid var(--ink);
+    border-radius: 22px 22px 0 0;
+    box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.12);
+    z-index: 25;
+    transition: max-height 0.35s cubic-bezier(.2,.7,.2,1);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: dossier-mobile-enter 0.45s cubic-bezier(.2,.7,.2,1) both;
+  }
+  @keyframes dossier-mobile-enter {
+    0%   { transform: translateY(100%); }
+    100% { transform: translateY(0); }
+  }
+  /* Hauteurs des états. --dossier-peek-height doit rester ≤ la réserve de
+     72px de .reveal-bottom-reserve ; --dossier-half-height sert aussi aux
+     marges de défilement du verdict (cf. [data-verdict] plus bas). */
+  :root {
+    --dossier-peek-height: 68px;
+    --dossier-half-height: 44dvh;
+  }
+  .dossier-mobile-panel.peek {
+    max-height: var(--dossier-peek-height);
+  }
+  .dossier-mobile-panel.half {
+    max-height: var(--dossier-half-height);
+  }
+  .dossier-mobile-panel.full {
+    max-height: 70dvh;
+  }
+
+  /* Header (toujours visible) : tap pour ouvrir / replier. Deux lignes :
+     ce que contient le dossier, puis le début du premier texte. */
+  .dossier-mobile-header {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 44px;
+    padding: 10px 18px;
+    text-align: left;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--rule-soft);
+    width: 100%;
+    cursor: pointer;
+    font-family: inherit;
+    color: inherit;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .dossier-mobile-panel.peek .dossier-mobile-header {
+    border-bottom-color: transparent;
+  }
+  .dossier-mobile-chevron {
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    color: var(--ink-mute);
+    transition: transform 0.3s cubic-bezier(.2,.7,.2,1);
+  }
+  .dossier-mobile-chevron.up { transform: rotate(180deg); }
+  .dossier-mobile-header-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    min-width: 0;
+    flex: 1;
+  }
+  .dossier-mobile-header .dossier-tab {
+    max-width: 100%;
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: 10.5px;
+  }
+  .dossier-mobile-header .dossier-tab-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .dossier-mobile-excerpt {
+    max-width: 100%;
+    font-family: var(--font-serif);
+    font-size: 14px;
+    line-height: 1.3;
+    color: var(--ink-soft);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Corps scrollable du dossier. */
+  .dossier-mobile-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .dossier-mobile-body-inner {
+    padding: 18px 22px 28px;
+    font-family: var(--font-serif);
+  }
+
+  /* Overlay derrière le panel quand déplié — sous le panel mais au-dessus
+     de la zone question. Voile grisé + blur léger. Chevron centré en haut
+     pour rendre explicite "tap pour replier". */
+  .dossier-overlay {
+    position: fixed;
+    inset: 0;
+    bottom: 70dvh;
+    background: rgba(20, 17, 14, 0.34);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 22;
+    border: 0;
+    cursor: pointer;
+    animation: dossier-overlay-fade 0.25s ease-out both;
+  }
+  @keyframes dossier-overlay-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  /* Action bar bas — toujours visible pendant la reveal. Sticky position
+     fixed en bas, au-dessus de tout (z > overlay et panel). */
+  :root { --reveal-action-bar-height: 68px; }
+  .dossier-action-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
+    height: var(--reveal-action-bar-height);
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+    background: var(--paper);
+    border-top: 1px solid var(--rule);
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 10px;
+    align-items: center;
+    box-shadow: 0 -2px 8px rgba(26, 26, 26, 0.05);
+    animation: action-bar-enter 0.35s cubic-bezier(.2,.7,.2,1) both;
+  }
+  /* Dernière question : un seul bouton plein largeur (Terminer == Voir le
+     récap, on ne dédouble pas). */
+  .dossier-action-bar.single { grid-template-columns: 1fr; }
+  @keyframes action-bar-enter {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+  }
+  /* Sur petits écrans, on fait disparaître la bottom-tab-bar globale
+     pendant la reveal (la reveal action bar prend sa place). */
+  .question-stage ~ .bottom-tab-bar,
+  body:has(.dossier-action-bar) .bottom-tab-bar {
+    display: none;
+  }
+
+  /* Dossier ouvert à mi-hauteur : la réserve en bas du contenu grandit
+     d'autant, pour que le verdict et la fin de la question puissent défiler
+     au-dessus du panneau ; les marges de défilement du verdict aussi (cf.
+     lib/scroll-verdict). */
+  .reveal-bottom-reserve {
+    flex-shrink: 0;
+    height: calc(var(--reveal-action-bar-height) + 72px + env(safe-area-inset-bottom, 0px));
+  }
+  body:has(.dossier-mobile-panel.half) .reveal-bottom-reserve {
+    height: calc(var(--reveal-action-bar-height) + var(--dossier-half-height) + 16px + env(safe-area-inset-bottom, 0px));
+  }
+  [data-verdict] {
+    scroll-margin-top: 12px;
+    scroll-margin-bottom: calc(var(--reveal-action-bar-height) + var(--dossier-peek-height) + 12px + env(safe-area-inset-bottom, 0px));
+  }
+  body:has(.dossier-mobile-panel.half) [data-verdict] {
+    scroll-margin-bottom: calc(var(--reveal-action-bar-height) + var(--dossier-half-height) + 12px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .dossier-action-end {
+    background: transparent;
+    color: var(--ink);
+    border: 1.5px solid var(--rule);
+    border-radius: 14px;
+    padding: 12px 14px;
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .dossier-action-end:active { background: rgba(0, 0, 0, 0.04); }
+  .dossier-action-next {
+    background: var(--ink);
+    color: var(--paper);
+    border: 1.5px solid var(--ink);
+    border-radius: 14px;
+    padding: 12px 16px;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 15px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .dossier-action-next:active { transform: scale(0.985); }
+}
+
+/* Toast « Nouveau badge » (components/badge-toast.tsx). Bureau : coin
+   haut-droit sous l'AppNav. Mobile : en haut, elle masquait l'énoncé de la
+   question et le score des résultats de défi — on la pose en bas, au-dessus
+   de la barre d'action du reveal (68px) + la barre « Dossier » repliée (56px),
+   ce qui dégage aussi la cta-bar Valider et la bottom tab bar. */
+.badge-toast-card {
+  top: calc(72px + env(safe-area-inset-top, 0px));
+  right: calc(12px + env(safe-area-inset-right, 0px));
+}
+@media (max-width: 767.9px) {
+  .badge-toast-card {
+    top: auto;
+    bottom: calc(136px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Classement : seule la poignée ≡ démarre un glisser (dnd-kit
+   setActivatorNodeRef). Le reste de la ligne laisse défiler la page au doigt ;
+   la poignée, elle, bloque le geste natif (touch-action: none). */
+.rank-handle {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--ink-mute);
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 10px;
+  cursor: grab;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.rank-handle:active { cursor: grabbing; background: var(--hover-bg-strong); }
+.rank-handle:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
+}
+
+/* Pastilles déplaçables (catégorisation, curseur multiple) : anneau de focus
+   clavier visible, la pastille étant l'élément actionnable. */
+.drag-chip:focus-visible,
+.curseur-axis-badge:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+/* Pastille d'axe focalisée au-dessus de ses voisines (même logique que le
+   :hover plus haut — le style inline fixe zIndex). */
+.curseur-axis-badge:focus-visible { z-index: 20 !important; }
+
+/* Texte réservé aux lecteurs d'écran (ex. « (bien vu) » à côté d'un ✓
+   décoratif). Déclaré ici plutôt que via l'utilitaire Tailwind pour ne pas
+   dépendre de la détection de classes. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

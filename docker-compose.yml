@@ -1,0 +1,55 @@
+# Compose dédié à mon2027. Rejoint le network du compose principal
+# (/opt/docker/docker-compose.yml) en tant qu'external, pour que les
+# containers soient atteignables depuis prod_nginx via leur nom.
+
+services:
+  mon2027-player:
+    build:
+      context: .
+      dockerfile: Dockerfile.player
+      args:
+        NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${NEXT_PUBLIC_VAPID_PUBLIC_KEY:-}
+        NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL:-https://mon2027.fr}
+    image: mon2027-player:latest
+    container_name: prod_mon2027_player
+    restart: unless-stopped
+    env_file:
+      - ./player/.env
+    volumes:
+      # Base SQLite de prod en /data/prod.db (DATABASE_URL), partagée avec
+      # l'admin ; sauvegardes automatiques en /data/backups. Volume nommé
+      # pour la persistance.
+      - mon2027_db:/data
+    networks:
+      - backend-net
+    expose:
+      - "3000"
+
+  # Espace contributeurs (mon2027.fr/admin) : comptes individuels, historique,
+  # validations. Même base que le player.
+  mon2027-admin:
+    build:
+      context: .
+      dockerfile: Dockerfile.admin
+    image: mon2027-admin:latest
+    container_name: prod_mon2027_admin
+    restart: unless-stopped
+    env_file:
+      - ./admin/.env
+    volumes:
+      - mon2027_db:/data
+    networks:
+      - backend-net
+    expose:
+      - "3001"
+    depends_on:
+      - mon2027-player
+
+volumes:
+  mon2027_db:
+    name: mon2027_db
+
+networks:
+  backend-net:
+    name: docker_backend-net
+    external: true

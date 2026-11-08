@@ -1,0 +1,473 @@
+// Mon2027 — schéma partagé
+// Source de vérité unique pour le contenu (Question/Source, géré par admin),
+// le travail collectif des contributeurs (Contributor, QuestionRevision,
+// Validation, Comment), les propositions des joueurs (Suggestion) et les
+// réponses anonymes (Answer, écrit par player).
+// Les deux apps génèrent leur client Prisma à partir de ce fichier et
+// pointent leur DATABASE_URL vers la même base SQLite (prisma/dev.db).
+
+// Deux générateurs : chaque app reçoit son propre client dans son node_modules
+// local. Sans ça, Turbopack (qui scope son watcher au dossier de l'app) ne
+// trouve pas @prisma/client et plante / OOM. Régénérer depuis n'importe quelle
+// app écrit dans les deux destinations.
+generator clientAdmin {
+  provider = "prisma-client-js"
+  output   = "../admin/node_modules/.prisma/client"
+}
+
+generator clientPlayer {
+  provider = "prisma-client-js"
+  output   = "../player/node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// Une question posée à l'utilisateur sur un fait social.
+/// Géré par l'admin (création/validation/publication).
+model Question {
+  id       String  @id @default(cuid())
+  /// Code lisible humain, ex: Q-IMM-001
+  customId String? @unique
+  /// Slug court (2-3 mots) pour les URLs publiques /q/[slug]. Optionnel :
+  /// si non défini, le player tombe sur un fallback auto-généré depuis le
+  /// texte de la question. Quand défini, c'est cette valeur qui sert
+  /// d'URL canonique (plus lisible pour le partage).
+  slug     String? @unique
+
+  // ---- Classement et état ----
+  theme       String
+  sousTheme   String?
+  format      String // qcm | estimation_numerique | vrai_faux | classement | ab
+  statut      String  @default("brouillon") // brouillon | revue | publie | retire
+  sensibilite String  @default("standard") // standard | haute | critique
+  difficulte  Int     @default(3) // 1 à 5
+
+  // ---- Contenu pédagogique ----
+  question            String
+  precisions          String?
+  explication         String
+  contextePedagogique String?
+  /// "Mise en perspective" : 1 à 3 phrases courtes qui contextualisent le
+  /// chiffre dans le temps (évolution depuis 1990 / dernière décennie),
+  /// l'espace (vs Allemagne / UE / OCDE), ou la trajectoire (en hausse,
+  /// stable, en baisse). Affiché dans le dossier après le verdict. Permet
+  /// de passer d'une donnée brute ("47 %") à une compréhension structurelle
+  /// ("47 %, soit ×2 depuis 1990 et 10 pts au-dessus de la moyenne UE").
+  /// Optionnel : les questions sans perspective continuent d'afficher
+  /// uniquement l'explication + sources.
+  miseEnPerspective   String?
+  /// Indicateurs sémantiques transverses sur lesquels cette question pèse,
+  /// avec leur polarité. Stocké en JSON : `[{ "id": "precarite", "polarity": 1 }, …]`.
+  /// Permet d'agréger une lecture du portrait par axe sémantique
+  /// (précarité, inégalités, démocratie…) au-delà du thème éditorial.
+  /// 0 à 3 indicateurs par question. polarity = +1 si valeur élevée
+  /// (estimation) ou erreur (V/F, A/B, QCM ordinal) signe "+ d'intensité
+  /// du phénomène". Cf. player/src/lib/indicators.ts pour la taxonomie
+  /// et les règles de tagging.
+  indicators          String?
+
+  // ---- Estimation numérique ----
+  unite            String?
+  plageMin         Float?
+  plageMax         Float?
+  reponseNumerique Float?
+  toleranceVerte   Float?
+  toleranceOrange  Float?
+
+  // ---- Autres formats (QCM, V/F, A/B, classement) ----
+  /// JSON.stringify des choix proposés et de la bonne réponse.
+  payload String?
+
+  // ---- Méta ----
+  dateDonnee Int?
+  auteur     String
+  /// JSON array des noms des valideurs.
+  valideurs  String?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  dateValidation  DateTime?
+  datePublication DateTime?
+
+  sources     Source[]
+  revisions   QuestionRevision[]
+  validations Validation[]
+  comments    Comment[]
+
+  @@index([theme])
+  @@index([statut])
+  @@index([sensibilite])
+}
+
+/// Une source citée pour étayer la réponse d'une question.
+model Source {
+  id    String @id @default(cuid())
+  nom   String
+  url   String
+  type  String @default("primaire") // primaire | triangulation
+  ordre Int    @default(0)
+
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([questionId])
+}
+
+/// Compte utilisateur facultatif : sert uniquement à retrouver sa
+/// progression depuis un autre appareil. Pas d'email (pas de RGPD :
+/// pas de PII collectée). Pas de recovery : si l'utilisateur perd son
+/// mot de passe, le compte est définitivement inaccessible — c'est
+/// documenté explicitement dans le flux d'inscription.
+model User {
+  id            String   @id @default(cuid())
+  /// Identifiant unique choisi par l'utilisateur. Lowercased en base
+  /// pour assurer l'unicité insensible à la casse ; l'affichage UI
+  /// préserve la casse via `displayPseudo`.
+  pseudo        String   @unique
+  displayPseudo String
+  passwordHash  String
+  createdAt     DateTime @default(now())
+  lastSeenAt    DateTime @default(now())
+
+  snapshot      UserSnapshot?
+  sessions      Session[]
+  pushSubs      PushSubscription[]
+  defis         Defi[]
+  /// Réponses aux défis joués alors que le compte était connecté (ou rattachées
+  /// rétroactivement quand l'ami se connecte après avoir joué). Optionnelle :
+  /// un défi joué en mode anonyme n'a pas de lien vers User.
+  defiResponses DefiResponse[]
+  /// Propositions envoyées depuis l'app alors que le compte était connecté.
+  suggestions   Suggestion[]
+}
+
+/// Abonnement Web Push d'un appareil/navigateur d'un user. Un même user
+/// peut en avoir plusieurs (téléphone + desktop). `endpoint` est unique
+/// — le navigateur en garde un seul par origine, donc re-subscribe sur
+/// le même device écrase l'ancien via upsert sur endpoint.
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+/// État utilisateur sérialisé en JSON (Progress côté client).
+/// Une seule ligne par user (1:1). Le client écrase à chaque sync ;
+/// volume négligeable, pas d'historique conservé.
+model UserSnapshot {
+  userId    String   @id
+  blob      String
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/// Session cookie côté serveur : token aléatoire opaque indexé par id,
+/// expiré au-delà de `expiresAt`. On évite les JWT pour pouvoir
+/// révoquer (logout / suppression de compte) sans complexité.
+model Session {
+  id        String   @id
+  userId    String
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+/// Un défi 1-à-1 créé par un militant pour défier un proche sur 5 questions.
+/// Le militant peut être connecté ou non (mode anonyme = creatorUserId null,
+/// mais on retrouve son rôle de créateur via creatorClientId stocké en
+/// localStorage côté navigateur). L'ami joue sans compte, identifié uniquement
+/// par un UUID localStorage côté ami (`DefiResponse.amiClientId`).
+model Defi {
+  /// Short code lisible humain ("vague-rouge-9"). Sert d'URL : /d/[shortCode].
+  shortCode String @id
+
+  /// Compte du militant, NULL en mode anonyme. SetNull à la suppression du
+  /// compte plutôt que cascade : on garde le défi vivant pour l'ami.
+  creatorUserId String?
+  creator       User?   @relation(fields: [creatorUserId], references: [id], onDelete: SetNull)
+
+  /// UUID stocké côté navigateur du militant. Source de vérité de "qui est le
+  /// créateur" quand creatorUserId est null. Aussi présent quand connecté (pour
+  /// re-matcher si le user se déconnecte).
+  creatorClientId String
+
+  /// Prénom du militant affiché à l'ami sur B1 et dans la page de résultats.
+  creatorPseudo String
+
+  /// Rang de niveau (1..10) du militant au moment de la création — snapshot
+  /// figé, comme le reste de Defi. Affiché à l'ami sur la page d'invitation
+  /// pour donner du contexte sur l'envoyeur. Nullable : les défis créés
+  /// avant l'introduction du système de niveaux n'ont pas cette info.
+  /// Le nom du niveau est dérivé côté client à partir de LEVELS[rank-1]
+  /// pour rester source-unique.
+  creatorLevelRank Int?
+
+  /// Titre libre facultatif donné par le militant ("Pour ma sœur sceptique sur
+  /// le climat"). Affiché EN PLUS du label thématique calculé depuis les
+  /// questions, jamais à la place. Null si le militant a laissé le champ vide.
+  /// Cap softé à 60 chars côté validation pour rester lisible sur une ligne.
+  title String?
+
+  /// JSON array de Question.customId, dans l'ordre où l'ami doit les jouer.
+  questionIds String
+
+  /// "theme" | "favoris" — source de la sélection des 5 questions.
+  source String
+
+  /// Référence facultative quand source = "theme". Pas de FK Prisma (Theme
+  /// n'est pas un modèle persisté, c'est dérivé du contenu).
+  themeId String?
+
+  /// Snapshot des réponses du militant au moment de la création (capturé
+  /// depuis sa progression locale). JSON : { [questionId]: { value, correct } }.
+  /// Pour les questions que le militant n'avait pas encore jouées :
+  /// value = null, correct = false. C'est un snapshot figé : si le militant
+  /// rejoue après création, son score affiché sur la page de résultats reste
+  /// celui d'origine (un défi est un instantané).
+  creatorAnswers String
+
+  /// Score du militant sur ce défi (nombre de creatorAnswers correctes).
+  /// Dénormalisé pour permettre le tri / l'affichage sans parser le JSON.
+  creatorScore Int
+
+  createdAt DateTime @default(now())
+
+  /// Expiration soft à J+30 par défaut. Au-delà, on affiche un état "expiré"
+  /// et on propose la regénération avec les mêmes questions.
+  expiresAt DateTime
+
+  responses DefiResponse[]
+
+  @@index([creatorUserId])
+  @@index([creatorClientId])
+  @@index([expiresAt])
+}
+
+/// Réponse d'un ami à un défi. Contrainte unique (shortCode, amiClientId) :
+/// un même navigateur ne peut soumettre qu'une réponse par défi (idempotence
+/// et prévention du rejeu trivial). `answers` est un JSON objet
+/// { questionId: { value, correct } } cohérent avec le shape Progress.
+model DefiResponse {
+  id            String @id @default(cuid())
+  defiShortCode String
+  defi          Defi   @relation(fields: [defiShortCode], references: [shortCode], onDelete: Cascade)
+
+  /// Prénom saisi par l'ami sur B1, ou "Anonyme" s'il a laissé vide.
+  amiLabel String
+
+  /// UUID stocké en localStorage côté ami. Garantit l'unicité de la réponse
+  /// par navigateur et permet à la page C de reconnaître "c'est moi l'ami".
+  amiClientId String
+
+  /// Compte de l'ami s'il était connecté au moment de la soumission, NULL
+  /// sinon. SetNull à la suppression du compte : on garde la réponse vivante
+  /// pour le créateur (l'historique du défi ne dépend pas de la persistance
+  /// du compte ami). Permet à un ami connecté de retrouver ses défis joués
+  /// depuis n'importe quel device (sinon `amiClientId` ne matche que sur le
+  /// device d'origine). Aussi posé en rétro-claim quand l'ami visite
+  /// /resultats avec son cookie + une session nouvellement créée.
+  amiUserId String?
+  amiUser   User?   @relation(fields: [amiUserId], references: [id], onDelete: SetNull)
+
+  /// JSON: { [questionId]: { value: <serialized>, correct: boolean } }
+  answers String
+
+  /// Score brut : nombre de réponses correctes. Total est dans le défi
+  /// (toujours = length(questionIds)).
+  score Int
+
+  createdAt DateTime @default(now())
+
+  /// Timestamp où le créateur a "vu" cette réponse — c-à-d. ouvert la page
+  /// /d/[shortCode]/resultats en étant identifié comme creator. NULL tant
+  /// que le créateur n'a pas encore consulté ce défi depuis qu'il a reçu
+  /// cette réponse. Sert au polling `GET /api/defis/mine/unseen` qui compte
+  /// les responses dont ce champ est NULL pour les défis du créateur, afin
+  /// d'afficher la pastille rouge sur l'onglet "Défier".
+  seenByCreatorAt DateTime?
+
+  @@unique([defiShortCode, amiClientId])
+  @@index([defiShortCode])
+  @@index([seenByCreatorAt])
+  @@index([amiUserId])
+}
+
+/// Une réponse anonyme à une question. Pas de lien vers une session ou un user.
+/// Écrit par le player ; pas d'IP, pas de fingerprint, pas d'identifiant utilisateur.
+model Answer {
+  id String @id @default(cuid())
+
+  /// L'ID de la question (customId admin, ex: Q-IMM-001).
+  questionId String
+
+  /// Format de la question, dénormalisé pour faciliter l'agrégation.
+  /// "estimation_numerique" | "ab" | "vrai_faux" | "qcm" | "classement"
+  format String
+
+  /// La valeur de la réponse, sérialisée :
+  /// - estimation_numerique : nombre flottant en string ("3.7")
+  /// - ab/qcm : index en string ("0", "1", ...)
+  /// - vrai_faux : "true" ou "false"
+  /// - classement : JSON array d'indices, ex: "[2,0,3,1]"
+  value String
+
+  createdAt DateTime @default(now())
+
+  @@index([questionId])
+  @@index([questionId, format])
+}
+
+// ============================================================
+// Espace contributeurs (admin collectif)
+// ============================================================
+
+/// Compte d'un contributeur de l'espace admin : un petit noyau de confiance
+/// qui modifie réellement les questions. Totalement distinct de `User`
+/// (joueurs) : aucun lien, aucune élévation possible depuis l'app publique.
+/// Les comptes sont créés par un admin (pas d'inscription libre).
+model Contributor {
+  id                 String    @id @default(cuid())
+  /// Identifiant de connexion, normalisé en minuscules.
+  login              String    @unique
+  /// Nom affiché dans l'historique, les validations et la discussion.
+  displayName        String
+  passwordHash       String
+  /// contributeur | relecteur | admin (cf. admin/src/lib/auth/roles.ts)
+  role               String    @default("contributeur")
+  /// Vrai tant que le compte a un mot de passe provisoire (création ou
+  /// réinitialisation par un admin) : changement forcé à la connexion.
+  mustChangePassword Boolean   @default(true)
+  /// Compte désactivé : plus de connexion possible, historique conservé.
+  disabledAt         DateTime?
+  createdAt          DateTime  @default(now())
+  lastLoginAt        DateTime?
+
+  sessions           ContributorSession[]
+  revisions          QuestionRevision[]
+  validations        Validation[]
+  comments           Comment[]
+  handledSuggestions Suggestion[]
+}
+
+/// Session d'un contributeur. `id` est le SHA-256 du jeton du cookie : une
+/// fuite de la base ne donne aucune session utilisable.
+model ContributorSession {
+  id            String      @id
+  contributorId String
+  contributor   Contributor @relation(fields: [contributorId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now())
+  expiresAt     DateTime
+
+  @@index([contributorId])
+  @@index([expiresAt])
+}
+
+/// Historique d'une question : qui a changé quoi, quand.
+model QuestionRevision {
+  id            String       @id @default(cuid())
+  questionId    String
+  question      Question     @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  /// NULL = envoi en masse depuis le poste local (`deploy.py content`).
+  contributorId String?
+  contributor   Contributor? @relation(fields: [contributorId], references: [id], onDelete: SetNull)
+  /// creation | modification | statut | import
+  kind          String
+  /// JSON `{ champ: [avant, après] }` des champs modifiés (null à la création).
+  changes       String?
+  /// Empreinte du contenu après ce changement (cf. lib/content-hash).
+  contentHash   String
+  createdAt     DateTime     @default(now())
+
+  @@index([questionId, createdAt])
+}
+
+/// Validation d'une version précise d'une question par un relecteur. Ne
+/// compte que tant que le contenu actuel a la même empreinte : toute
+/// modification du contenu rend les validations précédentes caduques.
+model Validation {
+  id            String      @id @default(cuid())
+  questionId    String
+  question      Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  contributorId String
+  contributor   Contributor @relation(fields: [contributorId], references: [id], onDelete: Cascade)
+  contentHash   String
+  createdAt     DateTime    @default(now())
+
+  @@unique([questionId, contributorId])
+}
+
+/// Message de discussion entre contributeurs, rattaché à une question ou à
+/// une proposition de joueur (exactement l'un des deux).
+model Comment {
+  id           String      @id @default(cuid())
+  authorId     String
+  author       Contributor @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  questionId   String?
+  question     Question?   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  suggestionId String?
+  suggestion   Suggestion? @relation(fields: [suggestionId], references: [id], onDelete: Cascade)
+  body         String
+  createdAt    DateTime    @default(now())
+
+  @@index([questionId, createdAt])
+  @@index([suggestionId, createdAt])
+}
+
+/// Proposition d'un joueur depuis l'app publique : correction d'une question
+/// existante ou idée de nouvelle question. Sans effet direct sur le contenu :
+/// elle arrive dans la file d'attente de l'espace contributeurs.
+/// Pas d'IP ni d'empreinte stockées ; lien au compte joueur seulement s'il
+/// était connecté.
+model Suggestion {
+  id               String       @id @default(cuid())
+  /// customId de la question concernée (texte libre, comme Answer) ; NULL
+  /// pour une proposition de nouvelle question.
+  questionCustomId String?
+  /// erreur | source | formulation | nouvelle_question | autre
+  kind             String
+  message          String
+  sourceUrl        String?
+  userId           String?
+  user             User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  /// nouvelle | en_cours | acceptee | refusee
+  status           String       @default("nouvelle")
+  handledById      String?
+  handledBy        Contributor? @relation(fields: [handledById], references: [id], onDelete: SetNull)
+  handledAt        DateTime?
+  createdAt        DateTime     @default(now())
+  comments         Comment[]
+
+  @@index([status, createdAt])
+  @@index([questionCustomId])
+}
+
+/// Aperçu jouable d'une question, créé depuis l'espace contributeurs : l'état
+/// du formulaire (même non enregistré) est copié ici, et le player le rend à
+/// l'adresse /apercu/<id>. Rien n'est publié, rien n'est compté dans les
+/// statistiques ni dans la progression du joueur. Durée de vie courte,
+/// purgé à expiration (cf. player/src/lib/maintenance.ts).
+model QuestionPreview {
+  /// Jeton aléatoire (256 bits, base64url) : sert d'adresse.
+  id            String   @id
+  /// Colonnes de Question (mêmes noms) et sources, en JSON.
+  data          String
+  /// Contributeur qui a demandé l'aperçu (sans clé étrangère : un aperçu
+  /// n'a pas à survivre ni à bloquer la suppression d'un compte).
+  contributorId String
+  createdAt     DateTime @default(now())
+  expiresAt     DateTime
+
+  @@index([expiresAt])
+}

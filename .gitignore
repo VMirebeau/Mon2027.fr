@@ -1,0 +1,62 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Next.js
+.next/
+out/
+build/
+
+# Tests
+coverage/
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Env files (commit .example only)
+.env
+.env.*
+!.env.example
+
+# Prisma local DB
+# Empreintes de synchro local ↔ prod (cf. deploy.py content/pull), liées à dev.db
+prisma/content-base.json
+prisma/dev.db
+prisma/dev.db-journal
+**/prisma/dev.db
+**/prisma/dev.db-journal
+# Dumps/backups locaux de la DB (binaires, à ne jamais versionner)
+prisma/*.db.backup-*
+**/prisma/*.db.backup-*
+
+# Vercel
+.vercel
+
+# OS / editors
+.DS_Store
+Thumbs.db
+*.pem
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Playwright MCP artefacts
+.playwright-mcp/
+
+# Screenshots & design assets (kept locally, hors git)
+/*.png
+/design-from-claude/
+/design-from-claude-desktop/
+
+# Sauvegardes de la base de prod rapatriées par `deploy.py backup`
+# (données joueurs : ne jamais versionner)
+backups/

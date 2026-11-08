@@ -1,0 +1,217 @@
+[
+ {
+  "format": "vrai_faux",
+  "customId": "Q-CLI-002",
+  "payload": "{\"reponseCorrecte\":true}"
+ },
+ {
+  "format": "vrai_faux",
+  "customId": "Q-EDU-012",
+  "payload": "{\"reponseCorrecte\":true}"
+ },
+ {
+  "format": "vrai_faux",
+  "customId": "Q-INS-034",
+  "payload": "{\"reponseCorrecte\":true}"
+ },
+ {
+  "format": "vrai_faux",
+  "customId": "Q-SAN-045",
+  "payload": "{\"reponseCorrecte\":true}"
+ },
+ {
+  "format": "ab",
+  "customId": "Q-CLI-001",
+  "payload": "{\"choix\":[\"Le solaire photovoltaïque\",\"Le nucléaire\"],\"indexCorrect\":1,\"valeurs\":[35,8],\"unite\":\"g CO₂/kWh\"}"
+ },
+ {
+  "format": "ab",
+  "customId": "Q-ECO-051",
+  "payload": "{\"choix\":[\"Ceux qui le subissent\",\"Ceux qui l'ont choisi\"],\"indexCorrect\":1,\"valeurs\":[30,70],\"unite\":\"%\"}"
+ },
+ {
+  "format": "ab",
+  "customId": "Q-INS-022",
+  "payload": "{\"choix\":[\"Non, moins de 20 000 demandes\",\"Oui, plus de 20 000 demandes\"],\"indexCorrect\":1,\"valeurs\":[20000,30000],\"unite\":\"demandes (août 2021-juin 2023)\"}"
+ },
+ {
+  "format": "ab",
+  "customId": "Q-SAN-051",
+  "payload": "{\"choix\":[\"Au-dessus de la moyenne OCDE\",\"En-dessous de la moyenne OCDE\"],\"indexCorrect\":1}"
+ },
+ {
+  "format": "ab",
+  "customId": "Q-CLI-053",
+  "payload": "{\"choix\":[\"Plus de CO2 (à cause de la batterie)\",\"Moins de CO2\"],\"indexCorrect\":1,\"valeurs\":[null,\"2-3×\"],\"unite\":\"Émissions sur cycle de vie complet\"}"
+ },
+ {
+  "format": "ab",
+  "customId": "Q-CLI-054",
+  "payload": "{\"choix\":[\"L'éolien en mer (offshore)\",\"Le nucléaire (EPR 2)\"],\"indexCorrect\":1,\"valeurs\":[\"150-220 €/MWh\",\"70-130 €/MWh\"],\"unite\":\"LCOE estimé (€/MWh)\"}"
+ },
+ {
+  "format": "ab",
+  "customId": "Q-CLI-055",
+  "payload": "{\"choix\":[\"Le train\",\"La route\"],\"indexCorrect\":1,\"valeurs\":[\"~10 %\",\"~88 %\"],\"unite\":\"Part du fret intérieur (t-km)\"}"
+ },
+ {
+  "format": "ab",
+  "customId": "Q-CLI-056",
+  "payload": "{\"choix\":[\"Vrai (plus de 20 % de pertes)\",\"Faux (moins de 10 % de pertes)\"],\"indexCorrect\":0,\"valeurs\":[\"~21 %\",null],\"unite\":\"Taux de perte réseau eau potable\"}"
+ },
+ {
+  "format": "ab",
+  "customId": "Q-CLI-057",
+  "payload": "{\"choix\":[\"Oui, avec une baisse mesurée de ~12 % par rapport à la tendance\",\"Non, la consommation n'a pas baissé significativement\"],\"indexCorrect\":0,\"valeurs\":[\"-12 %\",null],\"unite\":\"Variation consommation électrique vs tendance\"}"
+ },
+ {
+  "format": "vraifaux_multi",
+  "customId": "Q-CLI-044",
+  "payload": "{\"affirmations\":[{\"id\":\"a1\",\"texte\":\"Les émissions de gaz à effet de serre de la France ont baissé depuis 1990.\",\"vrai\":true,\"why\":\"Vrai : -30 % entre 1990 (~547 Mt) et 2023 (373 Mt). Mais la trajectoire SNBC visait -40 % en 2030, repoussé à -50 % (SNBC 3 alignée sur Fit for 55).\"},{\"id\":\"a2\",\"texte\":\"L'électricité française est l'une des plus décarbonées d'Europe.\",\"vrai\":true,\"why\":\"Vrai : ~28 g CO2e/kWh en 2023 (RTE), contre ~380 en Allemagne, ~200 au Royaume-Uni, ~600 en Pologne. Grâce au nucléaire + hydraulique.\"},{\"id\":\"a3\",\"texte\":\"L'agriculture est le 1er secteur émetteur de gaz à effet de serre en France.\",\"vrai\":false,\"why\":\"Faux : le 1er secteur est le transport (32 % en 2023), devant l'agriculture (20 %). Mais l'agriculture est celui dont les émissions baissent le moins.\"},{\"id\":\"a4\",\"texte\":\"La forêt française est en expansion.\",\"vrai\":true,\"why\":\"Vrai en surface (+500 000 ha entre 2020 et 2023, IGN), mais sa capacité à absorber le CO2 a chuté de ~50 % en 15 ans à cause des sécheresses et des scolytes.\"},{\"id\":\"a5\",\"texte\":\"L'agriculture biologique couvre plus de 20 % des terres agricoles françaises.\",\"vrai\":false,\"why\":\"Faux : 10,4 % en 2023 (Agence Bio), en léger recul vs 2022. L'objectif 18 % en 2027 ne sera probablement pas atteint au rythme actuel.\"}]}"
+ },
+ {
+  "format": "vraifaux_multi",
+  "customId": "Q-EDU-008",
+  "payload": "{\"affirmations\":[{\"id\":\"a1\",\"texte\":\"En début de carrière, l'enseignant français est nettement moins payé que la moyenne OCDE.\",\"vrai\":false,\"why\":\"L'écart en début de carrière n'est que de 4 à 9 % selon le niveau, ce que l'OCDE qualifie de « proche de la moyenne ». L'écart se creuse surtout après 10-15 ans d'ancienneté.\"},{\"id\":\"a2\",\"texte\":\"La progression de salaire entre le début et la fin de carrière est en France plus forte qu'ailleurs.\",\"vrai\":true,\"why\":\"+76 % en France contre +66 % en moyenne OCDE (Regards sur l'éducation 2024). En relatif, la France récompense davantage l'ancienneté que beaucoup d'autres pays.\"},{\"id\":\"a3\",\"texte\":\"En milieu de carrière, le salaire enseignant français est inférieur d'au moins 15 % à la moyenne OCDE.\",\"vrai\":true,\"why\":\"Après 10-15 ans d'ancienneté, le salaire statutaire FR est au moins 15 % en dessous de la moyenne OCDE, en PPA — c'est le « creux » de la carrière française.\"},{\"id\":\"a4\",\"texte\":\"Le pouvoir d'achat réel des enseignants français a stagné depuis 2015.\",\"vrai\":true,\"why\":\"+1 % en termes réels entre 2015 et 2023 contre +4 % en moyenne OCDE. La stagnation est réelle même si la revalorisation 2023 a partiellement corrigé l'écart.\"}]}"
+ },
+ {
+  "format": "vraifaux_multi",
+  "customId": "Q-INS-019",
+  "payload": "{\"affirmations\":[{\"id\":\"s1\",\"texte\":\"Les femmes représentent plus de 40 % des membres des conseils d'administration du CAC 40.\",\"vrai\":true,\"why\":\"Vrai. 46,7 % en 2024 (loi Copé-Zimmermann de 2011, quota 40 % depuis 2017). La France est leader OCDE sur cet indicateur.\"},{\"id\":\"s2\",\"texte\":\"Le taux de plainte pour viol des femmes victimes dépasse 30 %.\",\"vrai\":false,\"why\":\"Faux. Seules 7 % des femmes victimes de viol, tentative de viol ou agression sexuelle déposent plainte (enquête VRS 2024, ministère de l'Intérieur).\"},{\"id\":\"s3\",\"texte\":\"L'écart de salaire en équivalent temps plein hommes-femmes est inférieur à 5 % en France.\",\"vrai\":false,\"why\":\"Faux. L'écart est de 14,0 % en EQTP dans le secteur privé en 2024 (INSEE). Il tombe à 3,6 % seulement à poste identique dans le même établissement — après avoir neutralisé toutes les inégalités structurelles.\"},{\"id\":\"s4\",\"texte\":\"Plus de 100 femmes ont été tuées par leur conjoint ou ex-conjoint en France en 2024.\",\"vrai\":true,\"why\":\"Vrai. 107 femmes tuées en 2024, +11 % sur un an (étude annuelle ministère de l'Intérieur).\"}]}"
+ },
+ {
+  "format": "vraifaux_multi",
+  "customId": "Q-SAN-049",
+  "payload": "{\"affirmations\":[{\"id\":\"a1\",\"texte\":\"La loi de 2005 imposait l'accessibilité totale des ERP au 1er janvier 2015.\",\"vrai\":true,\"why\":\"Loi n° 2005-102 du 11 février 2005 : tous les ERP devaient être accessibles au 1er janvier 2015. Les Ad'AP (2015) ont ensuite reporté l'échéance à septembre 2024.\"},{\"id\":\"a2\",\"texte\":\"Plus de 80 % des établissements recevant du public sont aujourd'hui pleinement accessibles.\",\"vrai\":false,\"why\":\"Selon le ministère de la Transition écologique, seuls 56 % des ERP étaient déclarés accessibles ou engagés dans un processus en 2024 — incluant les ERP qui ont obtenu une simple dérogation.\"},{\"id\":\"a3\",\"texte\":\"Les dérogations à l'accessibilité (« impossibilité technique ») sont rarement accordées en France.\",\"vrai\":false,\"why\":\"Les dérogations sont largement accordées (impossibilité technique, conservation du patrimoine, disproportion économique). Elles affaiblissent l'application réelle.\"},{\"id\":\"a4\",\"texte\":\"Les amendes pour non-accessibilité peuvent atteindre 225 000 € pour une entreprise.\",\"vrai\":true,\"why\":\"Code de la construction : jusqu'à 45 000 € pour une personne physique et 225 000 € pour une personne morale en cas de non-accessibilité.\"}]}"
+ },
+ {
+  "format": "curseur_multi",
+  "customId": "Q-CLI-013",
+  "payload": "{\"echelle\":{\"min\":0,\"max\":20,\"unite\":\"t CO2e/hab\"},\"labelMin\":\"Moins émetteur par hab\",\"labelMax\":\"Plus émetteur par hab\",\"items\":[{\"id\":\"fr\",\"label\":\"France\",\"valeur\":5.9},{\"id\":\"ue\",\"label\":\"Moyenne UE\",\"valeur\":7.2},{\"id\":\"de\",\"label\":\"Allemagne\",\"valeur\":8.5},{\"id\":\"cn\",\"label\":\"Chine\",\"valeur\":9},{\"id\":\"us\",\"label\":\"États-Unis\",\"valeur\":17}]}"
+ },
+ {
+  "format": "curseur_multi",
+  "customId": "Q-EDU-011",
+  "payload": "{\"echelle\":{\"min\":400,\"max\":560,\"unite\":\"points\"},\"labelMin\":\"Scores les plus bas\",\"labelMax\":\"Scores les plus hauts\",\"items\":[{\"id\":\"fr\",\"label\":\"France\",\"valeur\":474},{\"id\":\"de\",\"label\":\"Allemagne\",\"valeur\":475},{\"id\":\"fi\",\"label\":\"Finlande\",\"valeur\":484},{\"id\":\"ee\",\"label\":\"Estonie\",\"valeur\":510},{\"id\":\"jp\",\"label\":\"Japon\",\"valeur\":536}]}"
+ },
+ {
+  "format": "curseur_multi",
+  "customId": "Q-LOG-007",
+  "payload": "{\"echelle\":{\"min\":0,\"max\":35,\"unite\":\"%\"},\"labelMin\":\"Quasi pas de parc social\",\"labelMax\":\"Parc social très étendu\",\"items\":[{\"id\":\"es\",\"label\":\"Espagne\",\"valeur\":1.5},{\"id\":\"de\",\"label\":\"Allemagne\",\"valeur\":5},{\"id\":\"fr\",\"label\":\"France\",\"valeur\":16},{\"id\":\"dk\",\"label\":\"Danemark\",\"valeur\":20},{\"id\":\"nl\",\"label\":\"Pays-Bas\",\"valeur\":30}]}"
+ },
+ {
+  "format": "curseur_multi",
+  "customId": "Q-SAN-043",
+  "payload": "{\"echelle\":{\"min\":0,\"max\":1500,\"unite\":\"$PPA\"},\"labelMin\":\"Dépense plus faible\",\"labelMax\":\"Dépense plus élevée\",\"items\":[{\"id\":\"uk\",\"label\":\"Royaume-Uni\",\"valeur\":520},{\"id\":\"es\",\"label\":\"Espagne\",\"valeur\":530},{\"id\":\"ocde\",\"label\":\"Moyenne OCDE\",\"valeur\":669},{\"id\":\"de\",\"label\":\"Allemagne\",\"valeur\":830},{\"id\":\"fr\",\"label\":\"France\",\"valeur\":828}]}"
+ },
+ {
+  "format": "curseur_multi",
+  "customId": "Q-ECO-014",
+  "payload": "{\"echelle\":{\"min\":20,\"max\":50,\"unite\":\"%\"},\"labelMin\":\"Moins prélevé\",\"labelMax\":\"Plus prélevé\",\"items\":[{\"id\":\"us\",\"label\":\"États-Unis\",\"valeur\":27},{\"id\":\"uk\",\"label\":\"Royaume-Uni\",\"valeur\":35},{\"id\":\"de\",\"label\":\"Allemagne\",\"valeur\":40},{\"id\":\"it\",\"label\":\"Italie\",\"valeur\":42.5},{\"id\":\"se\",\"label\":\"Suède\",\"valeur\":43},{\"id\":\"fr\",\"label\":\"France\",\"valeur\":45.6}]}"
+ },
+ {
+  "format": "qcm",
+  "customId": "Q-CLI-019",
+  "payload": "{\"choix\":[\"Moins de 1 %\",\"Environ 10 %\",\"Environ 30 %\",\"Plus de 50 %\"],\"indexCorrect\":0}"
+ },
+ {
+  "format": "qcm",
+  "customId": "Q-EDU-030",
+  "payload": "{\"choix\":[\"Environ 70 %\",\"Environ 85 %\",\"Plus de 94 %\",\"Près de 100 %\"],\"indexCorrect\":2}"
+ },
+ {
+  "format": "qcm",
+  "customId": "Q-INS-048",
+  "payload": "{\"choix\":[\"1 seul pays (l'Autriche)\",\"Entre 5 et 15 pays\",\"Aucun, 18 ans partout dans l'UE\",\"Plus de 20 pays\"],\"indexCorrect\":1}"
+ },
+ {
+  "format": "qcm",
+  "customId": "Q-SAN-039",
+  "payload": "{\"choix\":[\"Moins de 20 %\",\"Environ 40 %\",\"Environ 60 %\",\"Plus de 80 %\"],\"indexCorrect\":1}"
+ },
+ {
+  "format": "classement",
+  "customId": "Q-CLI-045",
+  "payload": "{\"items\":[{\"id\":\"avion\",\"label\":\"Arrêter de prendre l'avion\",\"figure\":\"~2 000 kg CO2e/vol intercontinental\"},{\"id\":\"voiture\",\"label\":\"Vendre sa voiture thermique\",\"figure\":\"~2 000 kg/an (12 000 km)\"},{\"id\":\"renov\",\"label\":\"Rénover sa maison F → C\",\"figure\":\"~1 500 kg/an\"},{\"id\":\"veggie\",\"label\":\"Devenir végétarien\",\"figure\":\"~700 kg/an\"},{\"id\":\"bain\",\"label\":\"Ne plus prendre de bain\",\"figure\":\"~70 kg/an\"},{\"id\":\"tri\",\"label\":\"Trier ses déchets\",\"figure\":\"~50 kg/an\"}]}"
+ },
+ {
+  "format": "classement",
+  "customId": "Q-EDU-045",
+  "payload": "{\"items\":[{\"id\":\"adm\",\"label\":\"Administrations publiques hors enseignement supérieur\",\"position\":1,\"valeur\":15},{\"id\":\"esr\",\"label\":\"Enseignement supérieur\",\"position\":2,\"valeur\":22},{\"id\":\"priv\",\"label\":\"Entreprises (secteur privé)\",\"position\":3,\"valeur\":63}],\"unite\":\"% de la DIRD\",\"labelOrdre\":\"Du moins important au plus important\"}"
+ },
+ {
+  "format": "classement",
+  "customId": "Q-LOG-024",
+  "payload": "{\"items\":[{\"id\":\"paris\",\"label\":\"Paris\",\"figure\":\"~10 200 €/m²\"},{\"id\":\"nice\",\"label\":\"Nice\",\"figure\":\"~5 200 €/m²\"},{\"id\":\"lyon\",\"label\":\"Lyon\",\"figure\":\"~4 600 €/m²\"},{\"id\":\"bordeaux\",\"label\":\"Bordeaux\",\"figure\":\"~4 500 €/m²\"},{\"id\":\"marseille\",\"label\":\"Marseille\",\"figure\":\"~3 000 €/m²\"}]}"
+ },
+ {
+  "format": "classement",
+  "customId": "Q-SEC-024",
+  "payload": "{\"items\":[{\"id\":\"tabac\",\"label\":\"Tabac\",\"figure\":\"~75 000/an\"},{\"id\":\"alcool\",\"label\":\"Alcool\",\"figure\":\"~41 000/an\"},{\"id\":\"suicide\",\"label\":\"Suicide\",\"figure\":\"8 848 en 2023\"},{\"id\":\"route\",\"label\":\"Accidents de la route\",\"figure\":\"3 190 en 2024\"},{\"id\":\"homicide\",\"label\":\"Homicides\",\"figure\":\"976 en 2024\"}]}"
+ },
+ {
+  "format": "classement",
+  "customId": "Q-EDU-044",
+  "payload": "{\"items\":[{\"id\":\"pro\",\"label\":\"Bac professionnel\",\"position\":1,\"valeur\":80},{\"id\":\"tech\",\"label\":\"Bac technologique\",\"position\":2,\"valeur\":90},{\"id\":\"gen\",\"label\":\"Bac général\",\"position\":3,\"valeur\":97}],\"unite\":\"% réussite\",\"labelOrdre\":\"Du taux de réussite le plus faible au plus élevé\"}"
+ },
+ {
+  "format": "classement",
+  "customId": "Q-SAN-021",
+  "payload": "{\"items\":[\"Tabac\",\"Alcool\",\"Pollution de l'air\",\"Suicide\",\"Accidents de la route\"],\"ordreCorrect\":[0,1,2,3,4]}"
+ },
+ {
+  "format": "classement",
+  "customId": "Q-SAN-064",
+  "payload": "{\"items\":[\"États-Unis\",\"Allemagne\",\"France\",\"Royaume-Uni\",\"Italie\"]}"
+ },
+ {
+  "format": "categorisation",
+  "customId": "Q-CLI-003",
+  "payload": "{\"categories\":[{\"id\":\"high\",\"label\":\"Plus de 20 % des émissions\"},{\"id\":\"mid\",\"label\":\"Entre 10 et 20 %\"},{\"id\":\"low\",\"label\":\"Moins de 10 %\"}],\"etiquettes\":[{\"id\":\"transp\",\"texte\":\"Transports\",\"categorie\":0,\"note\":\"~36 % (135 Mt CO2e, dont 32 % pour le routier seul)\"},{\"id\":\"agri\",\"texte\":\"Agriculture\",\"categorie\":1,\"note\":\"~20 % (76 Mt CO2e, surtout méthane bétail et N2O engrais)\"},{\"id\":\"indus\",\"texte\":\"Industrie manufacturière\",\"categorie\":1,\"note\":\"~19 % (70 Mt CO2e, en baisse régulière)\"},{\"id\":\"bat\",\"texte\":\"Bâtiments\",\"categorie\":1,\"note\":\"~16 % (58,4 Mt CO2e — chauffage résidentiel + tertiaire)\"},{\"id\":\"ener\",\"texte\":\"Industrie de l'énergie\",\"categorie\":2,\"note\":\"~9 % (35 Mt CO2e — niveau le plus bas depuis 1990 grâce au mix électrique décarboné)\"}]}"
+ },
+ {
+  "format": "categorisation",
+  "customId": "Q-ECO-047",
+  "payload": "{\"categories\":[{\"id\":\"menages\",\"label\":\"Payés par les ménages\"},{\"id\":\"entreprises\",\"label\":\"Payés par les entreprises\"}],\"etiquettes\":[{\"id\":\"tva\",\"texte\":\"TVA\",\"categorie\":0,\"note\":\"Incluse dans le prix payé par le consommateur final.\"},{\"id\":\"ir\",\"texte\":\"Impôt sur le revenu\",\"categorie\":0,\"note\":\"Payé par les ménages sur leurs revenus déclarés.\"},{\"id\":\"csg\",\"texte\":\"CSG / CRDS\",\"categorie\":0,\"note\":\"Prélevée sur les salaires, retraites et revenus du capital.\"},{\"id\":\"tf\",\"texte\":\"Taxe foncière\",\"categorie\":0,\"note\":\"Payée par les propriétaires de logements ou de terrains.\"},{\"id\":\"is\",\"texte\":\"Impôt sur les sociétés (IS)\",\"categorie\":1,\"note\":\"Sur les bénéfices des entreprises (taux nominal 25 %).\"},{\"id\":\"cvae\",\"texte\":\"Cotisation sur la valeur ajoutée (CVAE)\",\"categorie\":1,\"note\":\"Sur la VA des entreprises, en cours de suppression progressive.\"}]}"
+ },
+ {
+  "format": "categorisation",
+  "customId": "Q-INS-039",
+  "payload": "{\"categories\":[{\"id\":\"elu\",\"label\":\"Élu·e\"},{\"id\":\"nomme\",\"label\":\"Nommé·e\"}],\"etiquettes\":[{\"id\":\"prez\",\"texte\":\"Président de la République\",\"categorie\":0,\"note\":\"Suffrage universel direct depuis 1962\"},{\"id\":\"dep\",\"texte\":\"Député\",\"categorie\":0,\"note\":\"Suffrage universel direct, 5 ans\"},{\"id\":\"sen\",\"texte\":\"Sénateur\",\"categorie\":0,\"note\":\"Suffrage universel indirect (grands électeurs), 6 ans\"},{\"id\":\"maire\",\"texte\":\"Maire\",\"categorie\":0,\"note\":\"Élu par le conseil municipal, lui-même élu au suffrage universel direct\"},{\"id\":\"cc\",\"texte\":\"Membre du Conseil constitutionnel\",\"categorie\":1,\"note\":\"Nommé : 3 par président de la République, 3 par président de l'Assemblée, 3 par président du Sénat\"},{\"id\":\"dd\",\"texte\":\"Défenseur des droits\",\"categorie\":1,\"note\":\"Nommé par le président de la République après audition par les commissions parlementaires\"},{\"id\":\"arcom\",\"texte\":\"Président de l'ARCOM (audiovisuel)\",\"categorie\":1,\"note\":\"Nommé par le président de la République\"},{\"id\":\"ce\",\"texte\":\"Vice-président du Conseil d'État\",\"categorie\":1,\"note\":\"Nommé par décret en Conseil des ministres\"}]}"
+ },
+ {
+  "format": "categorisation",
+  "customId": "Q-SAN-065",
+  "payload": "{\"categories\":[{\"id\":\"reconnue\",\"label\":\"Reconnue comme maladie professionnelle\"},{\"id\":\"non\",\"label\":\"Non reconnue (pas aux tableaux)\"}],\"items\":[{\"id\":\"m1\",\"texte\":\"Troubles musculo-squelettiques (TMS : tendinites, lombalgies)\",\"categorieCorrecte\":\"reconnue\"},{\"id\":\"m2\",\"texte\":\"Épuisement professionnel (burnout)\",\"categorieCorrecte\":\"non\"},{\"id\":\"m3\",\"texte\":\"Mésothéliome (cancer de la plèvre lié à l'amiante)\",\"categorieCorrecte\":\"reconnue\"},{\"id\":\"m4\",\"texte\":\"Dépression réactionnelle au harcèlement moral\",\"categorieCorrecte\":\"non\"},{\"id\":\"m5\",\"texte\":\"Surdité professionnelle (exposition au bruit)\",\"categorieCorrecte\":\"reconnue\"},{\"id\":\"m6\",\"texte\":\"Asthme professionnel (poussières, allergènes)\",\"categorieCorrecte\":\"reconnue\"}]}"
+ },
+ {
+  "format": "categorisation",
+  "customId": "Q-SAN-063",
+  "payload": "{\"categories\":[{\"id\":\"idee\",\"label\":\"Idée reçue fausse\"},{\"id\":\"reel\",\"label\":\"Réalité documentée\"}],\"items\":[{\"id\":\"i1\",\"texte\":\"L'autisme est causé par les vaccins.\",\"categorieCorrecte\":\"idee\"},{\"id\":\"i2\",\"texte\":\"Environ 1 % des enfants nés en France sont sur le spectre autistique.\",\"categorieCorrecte\":\"reel\"},{\"id\":\"i3\",\"texte\":\"La hausse du nombre de cas d'autisme détectés prouve une épidémie.\",\"categorieCorrecte\":\"idee\"},{\"id\":\"i4\",\"texte\":\"L'âge moyen de diagnostic en France est trop tardif (4-5 ans) alors qu'il est possible dès 18 mois.\",\"categorieCorrecte\":\"reel\"},{\"id\":\"i5\",\"texte\":\"Les personnes autistes n'ont pas d'empathie.\",\"categorieCorrecte\":\"idee\"},{\"id\":\"i6\",\"texte\":\"Il y a un manque documenté de places en SESSAD et ULIS pour les enfants autistes.\",\"categorieCorrecte\":\"reel\"}]}"
+ },
+ {
+  "format": "pondere",
+  "customId": "Q-CLI-012",
+  "payload": "{\"total\":100,\"step\":1,\"parts\":[{\"id\":\"transports\",\"label\":\"Transports\",\"valeur\":32},{\"id\":\"agri\",\"label\":\"Agriculture\",\"valeur\":20},{\"id\":\"indus\",\"label\":\"Industrie (manufacturière)\",\"valeur\":17},{\"id\":\"bati\",\"label\":\"Bâtiments (chauffage logements/bureaux)\",\"valeur\":16},{\"id\":\"energie\",\"label\":\"Industrie de l'énergie\",\"valeur\":12},{\"id\":\"dechets\",\"label\":\"Déchets\",\"valeur\":3}]}"
+ },
+ {
+  "format": "pondere",
+  "customId": "Q-ECO-045",
+  "payload": "{\"total\":100,\"step\":5,\"parts\":[{\"id\":\"fisc\",\"label\":\"Évasion fiscale (multinationales, particuliers)\",\"valeur\":60},{\"id\":\"niches\",\"label\":\"Niches fiscales (perte nette)\",\"valeur\":25},{\"id\":\"nonrecours\",\"label\":\"Non-recours aux prestations sociales\",\"valeur\":10},{\"id\":\"sociale\",\"label\":\"Fraude sociale (toutes branches)\",\"valeur\":5}]}"
+ },
+ {
+  "format": "pondere",
+  "customId": "Q-INS-052",
+  "payload": "{\"total\":100,\"step\":5,\"parts\":[{\"id\":\"petitions\",\"label\":\"Pétitions en ligne\",\"valeur\":50},{\"id\":\"consultations\",\"label\":\"Consultations publiques officielles\",\"valeur\":25},{\"id\":\"budgets\",\"label\":\"Budgets participatifs\",\"valeur\":15},{\"id\":\"tirage\",\"label\":\"Assemblées citoyennes tirées au sort\",\"valeur\":10}]}"
+ },
+ {
+  "format": "pondere",
+  "customId": "Q-SEC-051",
+  "payload": "{\"total\":100,\"step\":5,\"parts\":[{\"id\":\"police\",\"label\":\"Police nationale\",\"valeur\":54},{\"id\":\"gendarmerie\",\"label\":\"Gendarmerie nationale\",\"valeur\":25},{\"id\":\"prison\",\"label\":\"Administration pénitentiaire\",\"valeur\":10},{\"id\":\"justice\",\"label\":\"Services judiciaires\",\"valeur\":10},{\"id\":\"autres\",\"label\":\"Autres (sécurité civile, PJJ)\",\"valeur\":1}]}"
+ },
+ {
+  "format": "pondere",
+  "customId": "Q-ECO-006",
+  "payload": "{\"total\":100,\"step\":5,\"parts\":[{\"id\":\"top10\",\"label\":\"Les 10 % les plus riches\",\"valeur\":47},{\"id\":\"mid40\",\"label\":\"Les 40 % suivants\",\"valeur\":45},{\"id\":\"bot50\",\"label\":\"Les 50 % les moins dotés\",\"valeur\":8}]}"
+ }
+]

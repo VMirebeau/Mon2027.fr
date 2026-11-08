@@ -1,0 +1,9 @@
+<!-- Mon2027 — icône d'application (squircle jaune + bulle stroke ink + bar chart) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="100%" height="100%">
+  <rect x="64" y="64" width="896" height="896" rx="224" fill="#FFC845" />
+  <path d="M 322 232 H 702 A 120 120 0 0 1 822 352 V 622 A 120 120 0 0 1 702 742 H 680 L 724 856 A 16 16 0 0 1 702 864 L 550 742 H 322 A 120 120 0 0 1 202 622 V 352 A 120 120 0 0 1 322 232 Z"
+        fill="#FAF8F3" />
+  <rect x="332" y="520" width="100" height="140" rx="50" fill="#1A1A1A" />
+  <rect x="462" y="420" width="100" height="240" rx="50" fill="#1A1A1A" />
+  <rect x="592" y="320" width="100" height="340" rx="50" fill="#FF6B6B" />
+</svg>

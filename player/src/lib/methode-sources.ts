@@ -1,0 +1,235 @@
+// Catalogue des organismes cités par les questions publiées.
+// Snapshot du 2026-05-19 : 235 organismes distincts (répartition par famille
+// ci-dessous). Le NOMBRE de sources citées n'est plus figé ici : il est
+// calculé côté serveur à chaque chargement (HomeContent.totalSources) et
+// partagé par Méthode et Découvrir, pour qu'ils affichent le même chiffre.
+// Régénérer la répartition en interrogeant la DB :
+//   prisma.source.findMany({ where: { question: { statut: "publie" } } })
+//   puis grouper par hostname (sans www.).
+
+export type Organism = {
+  label: string;
+  count: number;
+  // Pour les libellés composites (ex. Min. Intérieur regroupe interieur.gouv.fr
+  // + immigration + gendarmerie + mobile), `count` est la somme.
+};
+
+export type SourceFamily = {
+  id: string;
+  title: string;
+  tagline: string;
+  // Organismes triés par count décroissant.
+  // Les `visibleCount` premiers sont mis en avant en chips ; les autres
+  // sont dépliés via "voir tout".
+  visibleCount: number;
+  organisms: Organism[];
+};
+
+export const ORGANISMS_TOTAL = 235;
+
+export const SOURCE_FAMILIES: SourceFamily[] = [
+  {
+    id: "stat-publique",
+    title: "Statistique publique française",
+    tagline:
+      "Les producteurs primaires : services statistiques ministériels et instituts officiels.",
+    visibleCount: 6,
+    organisms: [
+      { label: "INSEE", count: 157 },
+      { label: "DREES", count: 46 },
+      { label: "SDES (env.)", count: 28 },
+      { label: "DARES (travail)", count: 12 },
+      { label: "OFDT (drogues)", count: 9 },
+      { label: "Agreste (agri.)", count: 5 },
+      { label: "ONISR (sécurité routière)", count: 3 },
+      { label: "France Travail stat.", count: 1 },
+      { label: "DEPP (éducation)", count: 1 },
+      { label: "Assurance retraite stat.", count: 2 },
+    ],
+  },
+  {
+    id: "etat",
+    title: "Ministères, agences & opérateurs de l'État",
+    tagline:
+      "Données issues des politiques publiques : ministères, agences techniques, opérateurs.",
+    visibleCount: 8,
+    organisms: [
+      { label: "Min. de l'Intérieur (SSMSI, immigration, gendarmerie)", count: 52 },
+      { label: "Min. de l'Écologie + ADEME", count: 35 },
+      { label: "Sécurité sociale / URSSAF / Assurance maladie / CAF", count: 30 },
+      { label: "Min. de l'Éducation + ESR", count: 26 },
+      { label: "Budget / Finances / Trésor / Impôts", count: 25 },
+      { label: "Min. de la Justice", count: 20 },
+      { label: "Santé publique France", count: 13 },
+      { label: "Banque des Territoires", count: 9 },
+      { label: "RTE + filière énergie (IFP, CNES, ANDRA)", count: 9 },
+      { label: "ANAH", count: 4 },
+      { label: "Banque de France", count: 3 },
+      { label: "Min. de la Culture", count: 3 },
+      { label: "ARCOM", count: 2 },
+      { label: "IGN", count: 2 },
+      { label: "INED", count: 2 },
+      { label: "INSERM", count: 3 },
+      { label: "ANSES / ANSM", count: 4 },
+      { label: "Agence Bio", count: 2 },
+      { label: "Min. de la Défense", count: 2 },
+      { label: "Min. des Sports", count: 1 },
+      { label: "France Travail", count: 2 },
+      { label: "Fonction publique", count: 3 },
+      { label: "Météo France", count: 1 },
+      { label: "IFREMER", count: 2 },
+      { label: "MNHN", count: 1 },
+      { label: "INPI", count: 1 },
+      { label: "INRS (santé au travail)", count: 1 },
+      { label: "FranceAgriMer", count: 1 },
+      { label: "Eaufrance / OIEau", count: 2 },
+      { label: "Outre-mer (observatoire)", count: 1 },
+      { label: "ANRU", count: 1 },
+      { label: "ANLCI (illettrisme)", count: 1 },
+      { label: "CNSA (autonomie)", count: 1 },
+      { label: "Handicap.gouv / FIPHFP", count: 3 },
+      { label: "HAS (Haute Autorité de Santé)", count: 1 },
+      { label: "ARS", count: 1 },
+      { label: "Agence de la biomédecine", count: 1 },
+      { label: "Fédération Addictions", count: 1 },
+      { label: "Académie de médecine", count: 1 },
+      { label: "Apur (Paris)", count: 1 },
+      { label: "Institut Paris Région", count: 1 },
+      { label: "Ville de Paris", count: 2 },
+      { label: "info.gouv.fr", count: 4 },
+    ],
+  },
+  {
+    id: "democratie",
+    title: "Parlement, contrôle & droit",
+    tagline:
+      "Pouvoir législatif, audit indépendant des finances publiques, justice et autorités constitutionnelles.",
+    visibleCount: 7,
+    organisms: [
+      { label: "Sénat", count: 35 },
+      { label: "Vie publique", count: 26 },
+      { label: "Cour des comptes", count: 21 },
+      { label: "Assemblée nationale", count: 10 },
+      { label: "Légifrance / Service public", count: 10 },
+      { label: "FIPECO", count: 6 },
+      { label: "OFPRA / CNDA (asile)", count: 7 },
+      { label: "Défenseur des droits / Arrêtons les violences", count: 5 },
+      { label: "COR (retraites)", count: 4 },
+      { label: "ONPE (enfance protégée)", count: 3 },
+      { label: "CNCDH (droits de l'homme)", count: 2 },
+      { label: "France Stratégie", count: 5 },
+      { label: "CAE (analyse économique)", count: 1 },
+      { label: "IGF (inspection finances)", count: 1 },
+      { label: "HATVP (transparence)", count: 1 },
+      { label: "CNCCFP (financement politique)", count: 1 },
+      { label: "CIIVISE", count: 1 },
+      { label: "OIP (prisons)", count: 1 },
+      { label: "Conseil constitutionnel", count: 1 },
+      { label: "LCP / Datan (data Parlement)", count: 2 },
+      { label: "Haut Comité au logement", count: 1 },
+      { label: "Solidaires Finances Publiques", count: 1 },
+    ],
+  },
+  {
+    id: "international",
+    title: "Européen & international",
+    tagline:
+      "Comparaisons inter-pays harmonisées et grandes institutions intergouvernementales.",
+    visibleCount: 8,
+    organisms: [
+      { label: "Commission européenne (Eurostat)", count: 29 },
+      { label: "OCDE", count: 27 },
+      { label: "Toute l'Europe", count: 10 },
+      { label: "HCR (UNHCR)", count: 10 },
+      { label: "OIM (migrations)", count: 5 },
+      { label: "IPCC (GIEC climat)", count: 3 },
+      { label: "ONU", count: 2 },
+      { label: "Banque mondiale", count: 2 },
+      { label: "Conseil de l'Europe", count: 2 },
+      { label: "EEA (env. européen)", count: 1 },
+      { label: "IUCN (biodiversité)", count: 1 },
+      { label: "NATO / OTAN", count: 1 },
+      { label: "FBI / UCR (criminalité US)", count: 1 },
+      { label: "IPU (Union interparlementaire)", count: 1 },
+      { label: "Tax Observatory (EU)", count: 1 },
+      { label: "Focus 2030", count: 1 },
+      { label: "Francophonie", count: 1 },
+      { label: "Olympics.com", count: 1 },
+    ],
+  },
+  {
+    id: "recherche",
+    title: "Recherche, observatoires & médias spécialisés",
+    tagline:
+      "Universitaires, think tanks, ONG et presse spécialisée, surtout pour la triangulation.",
+    visibleCount: 8,
+    organisms: [
+      { label: "Sciences Po / OFCE", count: 4 },
+      { label: "Observatoire des inégalités", count: 3 },
+      { label: "RSF (presse)", count: 3 },
+      { label: "Café Pédagogique", count: 3 },
+      { label: "Maire-info", count: 3 },
+      { label: "ICMigrations (CNRS)", count: 1 },
+      { label: "IPP (Inst. Politiques Publiques)", count: 1 },
+      { label: "Carbone 4", count: 1 },
+      { label: "La Fabrique de l'industrie", count: 1 },
+      { label: "World Inequality Database", count: 1 },
+      { label: "Observation Société", count: 2 },
+      { label: "Our World in Data", count: 1 },
+      { label: "Bon Pote (climat)", count: 1 },
+      { label: "The Conversation", count: 1 },
+      { label: "Rexecode", count: 1 },
+      { label: "ESS France", count: 1 },
+      { label: "Transparency International", count: 2 },
+      { label: "Oxfam", count: 1 },
+      { label: "WWF", count: 1 },
+      { label: "L214", count: 1 },
+      { label: "UNAF (familles)", count: 1 },
+      { label: "UNPI (propriétaires)", count: 1 },
+      { label: "Que Choisir", count: 1 },
+      { label: "Prévention Routière", count: 1 },
+      { label: "Union sociale pour l'habitat", count: 2 },
+      { label: "IFOP", count: 1 },
+      { label: "Ipsos", count: 1 },
+      { label: "Médiamétrie", count: 1 },
+      { label: "CCIJP / Fonds presse libre", count: 3 },
+      { label: "Gazette des communes", count: 2 },
+      { label: "AEF Info (éducation)", count: 2 },
+      { label: "APM News (santé)", count: 2 },
+      { label: "Espace Infirmier", count: 1 },
+      { label: "Le Moniteur (BTP)", count: 1 },
+      { label: "Le Moci (commerce ext.)", count: 1 },
+      { label: "Natura Sciences", count: 1 },
+      { label: "Next Waste", count: 1 },
+      { label: "Connaissance des énergies", count: 1 },
+      { label: "France Info", count: 2 },
+      { label: "Revue politique", count: 1 },
+      { label: "L'Étudiant", count: 2 },
+      { label: "Campus France", count: 4 },
+      { label: "Erasmus+ France", count: 1 },
+      { label: "Histoire de l'immigration", count: 2 },
+      { label: "Infomigrants", count: 1 },
+      { label: "Trading Economics", count: 1 },
+      { label: "Notaires (immobilier)", count: 1 },
+      { label: "MeilleursAgents", count: 1 },
+      { label: "SeLoger", count: 1 },
+      { label: "MySweetImmo", count: 1 },
+      { label: "Observatoire Crédit Logement", count: 1 },
+      { label: "Journal de l'agence", count: 1 },
+      { label: "Defiscalisation.immo", count: 1 },
+      { label: "Apicil (retraite privée)", count: 1 },
+      { label: "Carsat (sécurité sociale rég.)", count: 1 },
+      { label: "Wikipédia (FR)", count: 3 },
+      { label: "ASH (action sociale)", count: 1 },
+      { label: "Actu-juridique", count: 1 },
+      { label: "L'Essor (presse défense)", count: 1 },
+      { label: "Opex360 (défense)", count: 1 },
+      { label: "ODSEF (démographie Québec)", count: 1 },
+      { label: "European Datalab", count: 1 },
+      { label: "Face au risque", count: 1 },
+      { label: "Prévention BTP", count: 1 },
+      { label: "Vernimmen.net (finance)", count: 1 },
+      { label: "Statistiques.com", count: 1 },
+    ],
+  },
+];

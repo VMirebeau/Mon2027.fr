@@ -1,0 +1,24 @@
+**/node_modules
+**/.next
+**/dev.db
+**/dev.db-journal
+**/dev.db.backup-*
+**/*.log
+.git
+audit
+scripts
+**/content-base.json
+.github
+.playwright-mcp
+*.png
+# Re-inclure les images OG/Twitter (file convention Next.js) et la variante
+# carree publique. Sans ces exceptions, *.png les exclurait du build context
+# et Next.js ne genererait pas les <meta og:image>.
+!player/src/app/opengraph-image.png
+!player/src/app/twitter-image.png
+!player/public/og-square.png
+!admin/src/app/opengraph-image.png
+!admin/src/app/twitter-image.png
+**/tsconfig.tsbuildinfo
+**/.env
+**/.env.local

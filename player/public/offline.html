@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F5F1E8">
+<meta name="robots" content="noindex">
+<title>Hors ligne · Mon2027</title>
+<!--
+  Page hors ligne servie par public/sw.js UNIQUEMENT quand une navigation
+  échoue faute de réseau. Mise en cache à l'installation du service worker.
+  Autonome : aucune ressource externe (polices, CSS, JS de l'appli), puisque
+  rien d'autre n'est en cache. Garder léger.
+-->
+<style>
+  :root {
+    --cream: #F5F1E8;
+    --cream-warm: #FAF8F3;
+    --ink: #1A1A1A;
+    --ink-soft: #4A4842;
+    --ink-mute: #66635B;
+    --coral: #FF6B6B;
+    --yellow: #FFC845;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: var(--cream);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: flex;
+    flex-direction: column;
+    padding: 24px 24px calc(24px + env(safe-area-inset-bottom, 0px));
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 17px;
+    letter-spacing: -0.02em;
+  }
+  .brand svg { width: 28px; height: 28px; flex-shrink: 0; }
+  .brand .y { color: var(--coral); }
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    max-width: 440px;
+    width: 100%;
+    margin: 0 auto;
+  }
+  .eyebrow {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin: 0 0 12px;
+  }
+  h1 {
+    margin: 0;
+    font-size: 34px;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+  }
+  p {
+    margin: 16px 0 0;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+  }
+  button {
+    margin-top: 28px;
+    width: 100%;
+    padding: 16px 20px;
+    border: 1.5px solid var(--ink);
+    border-radius: 16px;
+    background: var(--ink);
+    color: var(--cream-warm);
+    font: inherit;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button:focus-visible {
+    outline: 3px solid var(--yellow);
+    outline-offset: 3px;
+  }
+  .hint {
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--ink-mute);
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+  <div class="brand" aria-hidden="true">
+    <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+      <rect x="64" y="64" width="896" height="896" rx="224" fill="#FFC845"/>
+      <path d="M 322 232 H 702 A 120 120 0 0 1 822 352 V 622 A 120 120 0 0 1 702 742 H 680 L 724 856 A 16 16 0 0 1 702 864 L 550 742 H 322 A 120 120 0 0 1 202 622 V 352 A 120 120 0 0 1 322 232 Z" fill="#FAF8F3"/>
+      <rect x="332" y="520" width="100" height="140" rx="50" fill="#1A1A1A"/>
+      <rect x="462" y="420" width="100" height="240" rx="50" fill="#1A1A1A"/>
+      <rect x="592" y="320" width="100" height="340" rx="50" fill="#FF6B6B"/>
+    </svg>
+    <span>Mon<span class="y">2027</span></span>
+  </div>
+  <main>
+    <p class="eyebrow">Hors ligne</p>
+    <h1>Pas de connexion pour l'instant.</h1>
+    <p>
+      Les questions, leurs sources et tes défis ont besoin du réseau. Ta
+      progression est enregistrée sur cet appareil : tu reprendras là où tu
+      en étais.
+    </p>
+    <button type="button" id="retry">Réessayer</button>
+    <div class="hint" role="status" id="status">La page se recharge dès que le réseau revient.</div>
+  </main>
+  <script>
+    (function () {
+      function retry() { window.location.reload(); }
+      document.getElementById("retry").addEventListener("click", retry);
+      window.addEventListener("online", retry);
+    })();
+  </script>
+</body>
+</html>

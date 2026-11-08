@@ -1,0 +1,57 @@
+# syntax=docker/dockerfile:1.6
+# Build context : racine du repo Mon2027 (contient prisma/ et admin/).
+
+FROM node:22-bookworm-slim AS deps
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY prisma ./prisma
+COPY admin/package.json admin/package-lock.json ./admin/
+WORKDIR /app/admin
+RUN npm ci
+
+FROM node:22-bookworm-slim AS builder
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1
+# basePath=/admin pour servir l'admin sous mon2027.fr/admin derrière nginx.
+ENV NEXT_BASE_PATH=/admin
+# Voir Dockerfile.player : prisma exige un package.json à la racine.
+COPY package.json package-lock.json ./
+COPY prisma ./prisma
+COPY --from=deps /app/admin/node_modules ./admin/node_modules
+COPY admin ./admin
+# Voir Dockerfile.player : symlinks pour que Prisma 6 trouve son binaire
+# dans /app/node_modules/ (qu'il considère comme racine projet via
+# prisma.config.ts → ../prisma/schema.prisma) sans déclencher un auto-install.
+RUN mkdir -p /app/node_modules && \
+    ln -s /app/admin/node_modules/prisma /app/node_modules/prisma && \
+    ln -s /app/admin/node_modules/@prisma /app/node_modules/@prisma
+WORKDIR /app/admin
+RUN npx prisma generate
+# Voir Dockerfile.player.
+RUN DATABASE_URL="file:/tmp/build.db" npx prisma migrate deploy
+RUN NODE_ENV=production DATABASE_URL="file:/tmp/build.db" npm run build
+
+FROM node:22-bookworm-slim AS runner
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_BASE_PATH=/admin
+ENV PORT=3001
+ENV HOSTNAME=0.0.0.0
+
+RUN groupadd -g 1001 nodejs && useradd -u 1001 -g nodejs -M -s /usr/sbin/nologin nextjs
+
+COPY --from=builder --chown=nextjs:nodejs /app/admin/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/admin/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/admin/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/admin/node_modules/prisma ./node_modules/prisma
+COPY --from=builder --chown=nextjs:nodejs /app/admin/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder --chown=nextjs:nodejs /app/admin/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder --chown=nextjs:nodejs /app/admin/prisma.config.ts ./prisma.config.ts
+
+USER nextjs
+EXPOSE 3001
+CMD ["node", "server.js"]

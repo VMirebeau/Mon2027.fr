@@ -1,0 +1,71 @@
+# CI workflow Mon2027 — typecheck + lint + tests sur push / PR.
+#
+# Pourquoi : la couverture de tests étant en construction (≈50 tests métier
+# côté player, 1 smoke côté admin), le filet principal est le typecheck +
+# lint. La CI rejoue ces 3 vérifs pour empêcher qu'un PR casse l'arbre.
+#
+# Stratégie : matrix sur les 2 apps (admin, player) pour paralléliser. Le
+# schéma Prisma est partagé — on génère le client une fois côté admin (où
+# le schema vit) puis on cache node_modules.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    name: ${{ matrix.app }} · typecheck + lint + tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [admin, player]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Même version que les images Docker de prod (node:22-bookworm-slim).
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: ${{ matrix.app }}/package-lock.json
+
+      - name: Install
+        working-directory: ${{ matrix.app }}
+        run: npm ci
+
+      - name: Generate Prisma client
+        working-directory: ${{ matrix.app }}
+        # Le chemin du schema est lu depuis prisma.config.ts (../prisma/schema.prisma).
+        run: npx prisma generate
+
+      - name: Migrations ↔ schéma
+        # Échoue si prisma/schema.prisma décrit quelque chose qu'aucune
+        # migration ne crée (ex. tables ajoutées par `db push`) : une base
+        # neuve construite par `migrate deploy` serait alors incomplète.
+        # Une seule fois (le schéma est partagé), côté player.
+        if: matrix.app == 'player'
+        working-directory: player
+        run: npx prisma migrate diff --from-migrations ../prisma/migrations --to-schema-datamodel ../prisma/schema.prisma --shadow-database-url "file:${{ runner.temp }}/shadow.db" --exit-code
+
+      - name: Typecheck
+        working-directory: ${{ matrix.app }}
+        run: npm run typecheck
+
+      - name: Lint
+        working-directory: ${{ matrix.app }}
+        run: npm run lint
+
+      - name: Tests
+        working-directory: ${{ matrix.app }}
+        run: npm test
+
+      - name: Audit dépendances (production, high+)
+        working-directory: ${{ matrix.app }}
+        # Ne fail que sur les vulns sérieuses (high/critical). Les info/low
+        # polluent souvent la CI sans valeur ajoutée.
+        run: npm audit --omit=dev --audit-level=high
